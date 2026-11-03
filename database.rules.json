@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "games": {
+      "$g": {
+        ".read": true,
+        ".write": "!data.exists()",
+        "state": { ".write": true },
+        "players": {
+          "$pid": {
+            ".write": "!data.exists()",
+            ".validate": "newData.hasChildren(['name', 't']) && newData.child('name').isString() && newData.child('name').val().length <= 20"
+          }
+        },
+        "answers": {
+          "$i": {
+            "$pid": {
+              ".write": "!data.exists() && root.child('games').child($g).child('players').child($pid).exists()",
+              ".validate": "newData.child('opt').isNumber() && newData.child('opt').val() >= 0 && newData.child('opt').val() <= 2"
+            }
+          }
+        }
+      }
+    }
+  }
+}

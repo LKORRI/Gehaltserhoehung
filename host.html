@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gehaltserhöhung – Beamer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/qrcode.js"></script>
+</head>
+<body>
+<div class="host">
+  <header>
+    <div class="brand"><span class="dot"></span>Gehaltserhöhung · Relative Lohngerechtigkeit in der Praxis</div>
+    <div id="hinfo" class="htimer"></div>
+  </header>
+  <main id="main"></main>
+  <footer>
+    <span><span id="status"></span> · <span class="credit">Illustrationen: Freepik</span></span>
+    <div class="ctrl">
+      <button id="bReset" title="Neues Spiel mit neuem Code">Neues Spiel</button>
+      <button id="bBack" title="Pfeil links">Zurück</button>
+      <button id="bNext" class="primary" title="Leertaste oder Pfeil rechts">Weiter ▶</button>
+    </div>
+  </footer>
+</div>
+
+<script type="module">
+import { connect } from "./db.js";
+import { ROUNDS, START_BUDGET, QUESTION_SECONDS, SUBTITLE, variantFor, replay, score, fired, euro } from "./game.js";
+import { card, esc, LETTERS, store, mineFrom, avatar } from "./ui.js";
+
+const main = document.getElementById("main");
+const hinfo = document.getElementById("hinfo");
+const statusEl = document.getElementById("status");
+const params = new URLSearchParams(location.search);
+const localFlag = params.has("local") ? "&local" : "";
+
+let autoFor = null;
+let db, g, state = null, players = {}, answers = {}, tick = null, lastKey = "";
+
+const newCode = () => {
+  const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(4)), (x) => a[x % a.length]).join("");
+};
+const playerUrl = () => `${new URL("./", location.href).href}?g=${g}${localFlag}`;
+
+function setMain(html, key) {
+  if (key && key === lastKey) return false;
+  lastKey = key || "";
+  main.innerHTML = html;
+  return true;
+}
+
+function qrSvg(text) {
+  const qr = qrcode(0, "M"); qr.addData(text); qr.make();
+  return qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
+}
+
+// Für jeden Spieler: welche Variante in Runde r, und was hat er geantwortet?
+function roundData(r) {
+  const out = {}; // variantId -> { v, players: n, opts: [n,n,n] }
+  for (const id of Object.keys(players)) {
+    const mine = mineFrom(answers, id);
+    const v = variantFor(r, replay(mine, r, r).flags);
+    const d = (out[v.id] ||= { v, n: 0, answered: 0, opts: v.options.map(() => 0) });
+    d.n++;
+    const a = mine[r];
+    if (a && a.opt != null) { d.answered++; d.opts[a.opt]++; }
+  }
+  return Object.values(out).sort((a, b) => b.n - a.n);
+}
+
+function lobby() {
+  const names = Object.values(players).sort((a, b) => a.t - b.t);
+  const url = playerUrl();
+  setMain(`
+    <div class="lobby">
+      <div>
+        <h1>Gehalts&shy;erhöhung<em>!</em></h1>
+        <p class="lead"><b>${esc(SUBTITLE)}</b><br>Ihr seid Chefs einer Bank. ${ROUNDS.length} Leute wollen mehr Geld, ihr habt ${euro(START_BUDGET)} im Monat. Budget überzogen? Raus. Stimmung im Keller? Die Leute kündigen.</p>
+        <div class="crew">${["sandra","martin","joerg","thomas","anna","julia","kevin","brigitteBaby"].map((id) => `<span class="mini">${avatar(id)}</span>`).join("")}</div>
+        <div class="count" id="cnt"></div>
+        <div class="players" id="pl"></div>
+      </div>
+      <div class="qrbox">${qrSvg(url)}<div class="url">${esc(url.replace(/^https?:\/\//, ""))}</div><div class="source">Spielcode ${esc(g)}</div></div>
+    </div>`, "lobby");
+  document.getElementById("cnt").textContent = names.length === 1 ? "1 Chef*in ist dabei" : `${names.length} Chefs sind dabei`;
+  const pl = document.getElementById("pl");
+  const have = new Set([...pl.children].map((c) => c.dataset.k));
+  names.forEach((p) => {
+    const k = p.name + p.t;
+    if (have.has(k)) return;
+    const el = document.createElement("span");
+    el.className = "chip"; el.dataset.k = k; el.textContent = p.name;
+    pl.appendChild(el);
+  });
+  hinfo.innerHTML = "";
+}
+
+function question() {
+  const r = state.idx;
+  const data = roundData(r);
+  const np = Object.keys(players).length;
+  const many = data.length > 1;
+  const key = "q" + r + "-" + data.map((d) => d.v.id + d.n).join(",");
+  if (!many) {
+    const v = data[0]?.v || variantFor(r, {});
+    setMain(`
+      <div class="qgrid">
+        <div class="card">${card(v, { round: r, total: ROUNDS.length })}</div>
+        <div class="hopts">${v.options.map((o, i) => `<div class="hopt"><span class="letter">${LETTERS[i]}</span><span class="txt">${esc(o.label)}</span></div>`).join("")}</div>
+      </div>`, key);
+  } else {
+    setMain(`
+      <div class="branch">
+        <h2 class="bhead">Runde ${r + 1}: Je nachdem, wie ihr bisher entschieden habt, klopft bei euch jemand anderes an 🚪</h2>
+        <div class="bgrid">
+          ${data.map((d) => `<div class="card small"><div class="share-tag">bei ${Math.round((d.n / np) * 100)} % von euch</div>${card(d.v)}</div>`).join("")}
+        </div>
+      </div>`, key);
+  }
+  clearInterval(tick);
+  const upd = () => {
+    if (!state || state.phase !== "question") return clearInterval(tick);
+    const left = Math.max(0, Math.ceil((QUESTION_SECONDS * 1000 - (db.now() - state.startedAt)) / 1000));
+    const total = roundData(state.idx).reduce((s, d) => s + d.answered, 0);
+    hinfo.innerHTML = `<span>${total} / ${np} entschieden</span><span class="clock">${left}</span>`;
+    if ((left <= 0 || (np > 0 && total >= np)) && autoFor !== state.startedAt) {
+      autoFor = state.startedAt; clearInterval(tick);
+      const st = state.startedAt;
+      setTimeout(() => state.phase === "question" && state.startedAt === st && go(+1), 1200);
+    }
+  };
+  upd(); tick = setInterval(upd, 250);
+}
+
+function reveal() {
+  const r = state.idx;
+  const data = roundData(r);
+  const total = data.reduce((s, d) => s + d.answered, 0);
+  const firedNow = Object.keys(players).filter((id) => replay(mineFrom(answers, id), r + 1).budget < 0).length;
+  const blocks = data.map((d) => {
+    const top = d.opts.indexOf(Math.max(...d.opts));
+    return `
+      <div class="rblock">
+        <div class="reveal-head"><span class="mini">${avatar(d.v.id)}</span>${esc(d.v.name)} <span class="muted">· ${d.n} ${d.n === 1 ? "Chef*in" : "Chefs"}</span></div>
+        <div class="hopts">
+          ${d.v.options.map((o, i) => {
+            const p = d.answered ? Math.round((d.opts[i] / d.answered) * 100) : 0;
+            return `<div class="hopt ${i === top && d.answered ? "top" : ""}"><div class="share" data-w="${p}"></div><span class="letter">${LETTERS[i]}</span><span class="pct">${p} %</span><span class="txt">${esc(o.label)}<br><small>${esc(o.reaction)}</small></span></div>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }).join("");
+  if (setMain(`<div class="reveal ${data.length > 1 ? "two" : ""}">${blocks}</div>`, "r" + r + "-" + total)) {
+    requestAnimationFrame(() => requestAnimationFrame(() => main.querySelectorAll(".share").forEach((el) => (el.style.width = el.dataset.w + "%"))));
+  }
+  hinfo.innerHTML = `<span>${total} Antworten</span>${firedNow ? `<span class="warnpill">⚠️ ${firedNow} über Budget</span>` : ""}`;
+}
+
+function results() {
+  return Object.keys(players).map((id) => {
+    const s = replay(mineFrom(answers, id), ROUNDS.length);
+    return { name: players[id].name, s, sc: score(s) };
+  }).sort((a, b) => b.sc - a.sc);
+}
+
+function bankPath() {
+  const ans = {}; let flags = {};
+  ROUNDS.forEach((_, r) => { const v = variantFor(r, flags); ans[r] = { opt: v.bank }; flags = replay(ans, r + 1).flags; });
+  return replay(ans, ROUNDS.length);
+}
+
+function final() {
+  const rows = results();
+  const nFired = rows.filter((x) => fired(x.s)).length;
+  const avgMood = rows.length ? Math.round(rows.reduce((s, x) => s + x.s.mood, 0) / rows.length) : 0;
+  const medals = ["🥇", "🥈", "🥉", "4", "5"];
+  setMain(`
+    <div class="final">
+      <div>
+        <h2>Die besten Chefs 🏆</h2>
+        <div class="board">
+          ${rows.filter((x) => !fired(x.s)).slice(0, 5).map((x, i) => `<div class="brow"><span class="pos">${medals[i]}</span><span>${esc(x.name)}<br><small>💰 ${euro(x.s.budget)} · 😊 ${x.s.mood}</small></span><span class="pts">${x.sc}</span></div>`).join("") || `<p class="empty">Niemand hat überlebt 😅</p>`}
+        </div>
+      </div>
+      <div class="bigstats">
+        <div class="bigstat"><b>📞 ${nFired}</b><span>${nFired === 1 ? "Chef*in ist" : "Chefs sind"} rausgeflogen</span></div>
+        <div class="bigstat"><b>😊 ${avgMood}</b><span>durchschnittliche Stimmung</span></div>
+        ${rows.filter((x) => fired(x.s)).length ? `<div class="firedlist">Rausgeflogen: ${rows.filter((x) => fired(x.s)).map((x) => esc(x.name)).join(", ")}</div>` : ""}
+      </div>
+    </div>`, "final-" + rows.map((x) => x.sc).join(","));
+  hinfo.innerHTML = "";
+}
+
+function bank() {
+  const b = bankPath();
+  setMain(`
+    <div class="bankview">
+      <h2>Und so hätte die Raiffeisenbank entschieden 🏦</h2>
+      <div class="bankgrid">
+        ${b.history.map((h) => `
+          <div class="bcard">
+            <div class="reveal-head"><span class="mini">${avatar(h.v.id)}</span>${esc(h.v.name)} <span class="pill">${esc(h.v.criterion)}</span></div>
+            <div class="bdec">${esc(h.o.label)}</div>
+            <div class="bquote">„${esc(h.v.quote)}“ <span class="source">${esc(h.v.source)}</span></div>
+          </div>`).join("")}
+      </div>
+      <div class="banksum">Ergebnis der echten Bank: 💰 ${euro(b.budget)} übrig · 😊 Stimmung ${b.mood} · ${score(b)} Punkte</div>
+    </div>`, "bank");
+  hinfo.innerHTML = "";
+}
+
+function render() {
+  if (!state) return;
+  ({ lobby, question, reveal, final, bank })[state.phase]?.();
+  statusEl.textContent = `Spielcode ${g} · ${db.mode === "local" ? "lokaler Testmodus" : "live"} · Leertaste = weiter`;
+}
+
+const STEPS = [{ phase: "lobby" }, ...ROUNDS.flatMap((_, i) => [{ phase: "question", idx: i }, { phase: "reveal", idx: i }]), { phase: "final" }, { phase: "bank" }];
+const stepIndex = () => STEPS.findIndex((s) => s.phase === state.phase && (s.idx ?? null) === (state.idx ?? null));
+async function go(d) {
+  const s = STEPS[Math.max(0, Math.min(STEPS.length - 1, stepIndex() + d))];
+  await db.set(`games/${g}/state`, { phase: s.phase, idx: s.idx ?? null, startedAt: db.now() });
+}
+
+async function newGame() {
+  g = newCode();
+  store.set("lohnspiel-host-game", g);
+  history.replaceState(null, "", `?g=${g}${localFlag}`);
+  lastKey = "";
+  await db.set(`games/${g}`, { state: { phase: "lobby", idx: null, startedAt: db.now() }, created: db.now() });
+  subscribe();
+}
+
+let unsubs = [];
+function subscribe() {
+  unsubs.forEach((u) => u && u()); unsubs = [];
+  unsubs.push(db.onValue(`games/${g}/state`, (v) => { state = v; render(); }));
+  unsubs.push(db.onValue(`games/${g}/players`, (v) => { players = v || {}; render(); }));
+  unsubs.push(db.onValue(`games/${g}/answers`, (v) => { answers = v || {}; if (state && state.phase !== "question") render(); }));
+}
+
+document.getElementById("bNext").onclick = () => go(+1);
+document.getElementById("bBack").onclick = () => go(-1);
+document.getElementById("bReset").onclick = () => { if (confirm("Neues Spiel mit neuem QR-Code starten?")) newGame(); };
+document.addEventListener("keydown", (e) => {
+  if (e.key === " " || e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); go(+1); }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
+});
+
+(async () => {
+  db = await connect();
+  g = (params.get("g") || "").toUpperCase();
+  if (g && (await db.get(`games/${g}/state`))) subscribe();
+  else await newGame();
+})().catch((e) => { main.innerHTML = `<p class="empty">Verbindung fehlgeschlagen: ${esc(e.message)}</p>`; });
+</script>
+</body>
+</html>

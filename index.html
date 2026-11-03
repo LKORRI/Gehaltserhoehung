@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gehaltserhöhung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="phone">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>Gehaltserhöhung</div>
+    <div class="hud hidden" id="hud">
+      <span class="chip-s" id="hBudget"></span>
+      <span class="chip-s hm">😊 <span class="mbar"><span id="hMood"></span></span></span>
+    </div>
+  </div>
+  <div id="app" class="screen"><p class="lead">Verbinde …</p></div>
+</div>
+
+<script type="module">
+import { connect } from "./db.js";
+import { ROUNDS, START_BUDGET, START_MOOD, QUESTION_SECONDS, NO_ANSWER_MOOD, SUBTITLE, variantFor, replay, score, verdict, fired, euro } from "./game.js";
+import { card, delta, esc, LETTERS, randomId, store, session, mineFrom, avatar } from "./ui.js";
+import { moodOf } from "./avatars.js";
+
+const app = document.getElementById("app");
+const hud = document.getElementById("hud");
+const params = new URLSearchParams(location.search);
+const g = (params.get("g") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+let db, pid, me = null, state = null, mine = {}, all = {}, players = {};
+let tick = null, lastKey = "";
+
+function setScreen(html, key) {
+  if (key && key === lastKey) return false;
+  lastKey = key || "";
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+  return true;
+}
+
+function closedRounds() {
+  if (!state) return 0;
+  if (state.phase === "question") return state.idx;
+  if (state.phase === "reveal") return state.idx + 1;
+  if (state.phase === "final" || state.phase === "bank") return ROUNDS.length;
+  return 0;
+}
+
+function myState(upto = ROUNDS.length) { return replay(mine, upto, closedRounds()); }
+
+function updateHud() {
+  if (!me || !state || state.phase === "lobby") return hud.classList.add("hidden");
+  hud.classList.remove("hidden");
+  const s = myState();
+  const b = document.getElementById("hBudget");
+  b.textContent = "💰 " + euro(s.budget);
+  b.classList.toggle("neg", s.budget < 0);
+  document.getElementById("hMood").style.width = s.mood + "%";
+}
+
+function noGame() {
+  setScreen(`
+    <h1 class="big-title">Willkommen! 👋</h1>
+    <p class="lead">Scanne den QR-Code am Beamer oder gib den Spielcode ein.</p>
+    <form id="f"><input class="field" id="code" maxlength="6" placeholder="Spielcode" autocomplete="off" style="text-transform:uppercase">
+    <button class="btn">Weiter</button></form>`, "nogame");
+  document.getElementById("f").onsubmit = (e) => {
+    e.preventDefault();
+    const c = document.getElementById("code").value.trim().toUpperCase();
+    if (c) location.search = "?g=" + encodeURIComponent(c) + (params.has("local") ? "&local" : "");
+  };
+}
+
+function joinScreen() {
+  setScreen(`
+    <h1 class="big-title">${esc(SUBTITLE)}</h1>
+    <p class="lead">Du bist Chef*in einer Bank. Deine Leute wollen mehr Geld. Du hast <b>${euro(START_BUDGET)} pro Monat</b> für Gehaltserhöhungen.</p>
+    <div class="rules">
+      <div>💰 Überziehst du das Budget, <b>fliegst du raus.</b></div>
+      <div>😊 Ist die Stimmung im Keller, <b>läuft dir das Team davon.</b></div>
+    </div>
+    <form id="f" style="margin-top:18px">
+      <input class="field" id="name" maxlength="20" placeholder="Dein Name" autocomplete="off" value="${esc(store.get("lohnspiel-name") || "")}">
+      <button class="btn" id="go">Los geht's</button>
+    </form>`, "join");
+  document.getElementById("f").onsubmit = async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim().slice(0, 20);
+    if (!name) return;
+    document.getElementById("go").disabled = true;
+    store.set("lohnspiel-name", name);
+    await db.set(`games/${g}/players/${pid}`, { name, t: db.now() });
+  };
+}
+
+function lobbyScreen() {
+  setScreen(`
+    <div class="center" style="margin-top:40px">
+      <div class="pulse">💼</div>
+      <h1 class="big-title">Hallo ${esc(me.name)}!</h1>
+      <p class="lead">Du bist drin. Gleich klopft die erste Person an deine Bürotür. Schau auf den Beamer.</p>
+    </div>`, "lobby");
+}
+
+function questionScreen() {
+  const r = state.idx;
+  const before = replay(mine, r, r);
+  const v = variantFor(r, before.flags);
+  const a = mine[r];
+  if (a) return resultScreen(r, v, a, "Warte auf die anderen …");
+  const left = QUESTION_SECONDS * 1000 - (db.now() - state.startedAt);
+  if (left <= 0) {
+    return setScreen(`
+      <div class="card center"><div class="type-emoji">⏰</div><h2 class="verdict bad">Zu lange gezögert!</h2>
+      <p class="situation">${esc(v.name)} geht frustriert aus deinem Büro.</p><div class="deltas">${delta(0, NO_ANSWER_MOOD)}</div></div>`, "timeout" + r);
+  }
+  if (setScreen(`
+    <div class="card">${card(v, { round: r, total: ROUNDS.length })}</div>
+    <div class="timer"><div id="tb"></div></div>
+    <div class="options">
+      ${v.options.map((o, i) => `<button class="opt" data-letter="${LETTERS[i]}" data-i="${i}">${esc(o.label)}</button>`).join("")}
+    </div>`, `q${r}-${v.id}`)) {
+    app.querySelectorAll(".opt").forEach((b) => (b.onclick = () => answer(r, v, +b.dataset.i)));
+  }
+  startTimer();
+}
+
+async function answer(r, v, i) {
+  if (state.phase !== "question" || state.idx !== r || mine[r]) return;
+  mine[r] = { opt: i, v: v.id };
+  render();
+  await db.set(`games/${g}/answers/${r}/${pid}`, { opt: i, v: v.id });
+}
+
+function resultScreen(r, v, a, foot) {
+  const o = v.options[a.opt];
+  const s = myState(r + 1);
+  setScreen(`
+    <div class="card">
+      <div class="person"><div class="avatar big">${avatar(v.id, moodOf(o))}</div><div><h2>${esc(v.name)}</h2><div class="role">Du: ${esc(o.label)}</div></div></div>
+      <p class="reaction">${esc(o.reaction)}</p>
+      <div class="deltas">${delta(o.cost, o.mood)}</div>
+      ${o.note ? `<p class="note">ℹ️ ${esc(o.note)}</p>` : ""}
+      ${s.budget < 0 ? `<p class="warn">⚠️ Du bist über dem Budget! Am Jahresende wird abgerechnet …</p>` : ""}
+    </div>
+    <p class="waitnote">${esc(foot)}</p>`, `res${r}-${a.opt}`);
+}
+
+function revealScreen() {
+  const r = state.idx;
+  const before = replay(mine, r, r);
+  const v = variantFor(r, before.flags);
+  const a = mine[r];
+  if (a) return resultScreen(r, v, a, "Schau auf den Beamer 👀");
+  setScreen(`<div class="card center"><div class="type-emoji">⏰</div><h2 class="verdict bad">Keine Entscheidung</h2>
+    <div class="deltas">${delta(0, NO_ANSWER_MOOD)}</div></div><p class="waitnote">Schau auf den Beamer 👀</p>`, "revna" + r);
+}
+
+function startTimer() {
+  clearInterval(tick);
+  const upd = () => {
+    if (!state || state.phase !== "question") return clearInterval(tick);
+    const left = QUESTION_SECONDS * 1000 - (db.now() - state.startedAt);
+    const tb = document.getElementById("tb");
+    if (tb) tb.style.width = Math.max(0, left / (QUESTION_SECONDS * 10)) + "%";
+    if (left <= 0) { clearInterval(tick); render(); }
+  };
+  upd(); tick = setInterval(upd, 250);
+}
+
+function finalScreen() {
+  const s = myState();
+  const vd = verdict(s);
+  const ranking = Object.keys(players).map((id) => ({ id, sc: score(replay(mineFrom(all, id), ROUNDS.length)) })).sort((x, y) => y.sc - x.sc);
+  const rank = ranking.findIndex((x) => x.id === pid) + 1;
+  setScreen(`
+    <div class="card center">
+      <div class="counter">Jahresende</div>
+      ${ring(score(s))}
+      <h2 class="verdict ${fired(s) ? "bad" : "good"}">${vd.emoji} ${esc(vd.title)}</h2>
+      <p class="situation">${esc(vd.text)}</p>
+      <div class="stats">
+        <div><b class="${s.budget < 0 ? "neg" : ""}">${euro(s.budget)}</b><span>Budget übrig</span></div>
+        <div><b>${s.mood}</b><span>Stimmung</span></div>
+        <div><b>${s.quits}</b><span>Kündigungen</span></div>
+      </div>
+      <div class="score-line"><span>${rank ? `Platz ${rank} von ${ranking.length}` : ""}</span><span class="pts">${rank ? "#" + rank : ""}</span></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="counter">Dein Jahr</div>
+      ${s.history.map((h) => `<div class="hist"><span class="hn"><span class="mini">${avatar(h.v.id, moodOf(h.o))}</span>${esc(h.v.name)}</span><span>${h.o ? esc(h.o.label) : "⏰ keine Entscheidung"}</span></div>`).join("")}
+    </div>
+    <p class="waitnote">Und wie hätte die echte Bank entschieden? Schau auf den Beamer 👀</p>`, `final-${ranking.length}-${rank}`);
+}
+
+function ring(val) {
+  const segs = [["var(--yellow)", 0], ["var(--olive)", 90], ["var(--blue)", 180], ["var(--pink)", 270]];
+  const arc = (start) => {
+    const r = 88, a0 = (start + 12 - 90) * Math.PI / 180, a1 = (start + 78 - 90) * Math.PI / 180;
+    return `M${100 + r * Math.cos(a0)} ${100 + r * Math.sin(a0)} A${r} ${r} 0 0 1 ${100 + r * Math.cos(a1)} ${100 + r * Math.sin(a1)}`;
+  };
+  return `<div class="ring"><svg viewBox="0 0 200 200">${segs.map(([c, s]) => `<path d="${arc(s)}" stroke="${c}" stroke-width="22" stroke-linecap="round" fill="none"/>`).join("")}</svg>
+    <div class="val"><b>${val}</b><span>deine Punkte</span></div></div>`;
+}
+
+function render() {
+  updateHud();
+  if (!state) return setScreen(`<p class="lead">Dieses Spiel gibt es nicht (mehr). Scanne den QR-Code am Beamer noch einmal.</p>`, "nostate");
+  if (!me) return joinScreen();
+  if (state.phase === "lobby") return lobbyScreen();
+  if (state.phase === "question") return questionScreen();
+  if (state.phase === "reveal") return revealScreen();
+  return finalScreen();
+}
+
+(async () => {
+  if (!g) return noGame();
+  db = await connect();
+  pid = session.get("lohnspiel-pid-" + g) || randomId();
+  session.set("lohnspiel-pid-" + g, pid);
+  db.onValue(`games/${g}/state`, (v) => { state = v; render(); });
+  db.onValue(`games/${g}/players`, (v) => { players = v || {}; me = players[pid] || null; render(); });
+  db.onValue(`games/${g}/answers`, (v) => {
+    all = v || {};
+    mine = { ...mine, ...mineFrom(all, pid) };
+    if (state && (state.phase === "final" || state.phase === "bank")) render();
+    else updateHud();
+  });
+})().catch((e) => { app.innerHTML = `<p class="lead">Verbindung fehlgeschlagen: ${esc(e.message)}</p>`; });
+</script>
+</body>
+</html>
