@@ -228,3 +228,43 @@ b { font-weight: 800; }
 .bdec { font-size: 1.05em; }
 .bquote { font-size: .92em; }
 .banksum { margin-top: .8em; font-size: 1.2em; }
+
+.ava .crop.emo { display: grid; place-items: center; font-size: 2.4em; }
+.avatar .ava .crop.emo { font-size: 40px; }
+.host .avatar .ava .crop.emo { font-size: 3.6em; }
+.bigscore { margin: 14px auto 0; display: grid; gap: 2px; }
+.bigscore b { font-size: 64px; letter-spacing: -.04em; line-height: 1; }
+.bigscore span { color: var(--muted); font-weight: 600; font-size: 14px; }
+
+/* ---------- v3 Beamer ---------- */
+.goal { margin-top: 1em; font-size: 1.5em; background: var(--yellow); display: inline-block; padding: .5em 1em; border-radius: 99px; font-weight: 600; }
+.playgrid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 4vw; width: 100%; min-height: 0; }
+.leftcol { display: flex; flex-direction: column; gap: 1.4em; min-height: 0; }
+.bigclock { font-size: 9em; font-weight: 800; letter-spacing: -.05em; line-height: .9; font-variant-numeric: tabular-nums; }
+.bigclock.hot { color: var(--red); animation: pulse 1s ease-in-out infinite; }
+.qrmini { display: flex; align-items: center; gap: 1em; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: .8em 1em; font-weight: 700; font-size: 1.2em; }
+.qrmini svg { width: 7em; height: 7em; flex: none; }
+.ticker { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 1em 1.2em; flex: 1; overflow: hidden; }
+.tick { font-size: 1.25em; padding: .45em 0; border-top: 1px solid var(--line); animation: pop .4s ease-out; }
+.tick:first-of-type { border-top: 0; }
+.muted2 { color: var(--muted); }
+.lbtitle { font-size: 2.6em; font-weight: 800; margin-bottom: .6em; }
+.playgrid .board { gap: .55em; }
+.playgrid .brow { font-size: 1.35em; padding: .55em 1.1em; }
+.brow.perfect { background: var(--olive); border-color: transparent; }
+.podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; align-items: end; height: 60vh; }
+.pod { display: flex; flex-direction: column; align-items: center; gap: .3em; }
+.pname { font-size: 1.8em; font-weight: 800; text-align: center; }
+.ppts { font-size: 1.4em; font-weight: 700; background: var(--ink); color: #fff; padding: .15em .7em; border-radius: 99px; }
+.pblock { width: 100%; border-radius: 24px 24px 0 0; display: grid; place-items: center; font-size: 4em; font-weight: 800; }
+.p1 .pblock { height: 34vh; background: var(--yellow); }
+.p2 .pblock { height: 24vh; background: var(--blue); }
+.p3 .pblock { height: 16vh; background: var(--pink); }
+.bankgrid12 { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8em; }
+.bankgrid12 .bcard { padding: .8em 1em; gap: .45em; border-radius: 22px; }
+.bankgrid12 .reveal-head { font-size: 1.2em; }
+.bankgrid12 .pill { font-size: .55em; }
+.bankgrid12 .bdec { font-size: .98em; padding: .35em .7em; }
+.bfoot { display: flex; justify-content: space-between; gap: .5em; font-size: .9em; color: var(--muted); font-weight: 600; margin-top: auto; }
+.bfoot b { color: var(--ink); }
+.mini .ava .crop.emo { font-size: 1em; }

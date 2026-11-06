@@ -1,4 +1,4 @@
-import { euro } from "./game.js";
+import { euro } from "./cards.js";
 import { avatar } from "./avatars.js";
 export { avatar };
 
@@ -28,20 +28,23 @@ export function payLine(v) {
     </div>`;
 }
 
-export function card(v, { round, total } = {}) {
+export function card(v, { month, i, total, round } = {}) {
+  const head = month ? `<div class="counter">${esc(month)} · ${i + 1}/${total}</div>` : round != null ? `<div class="counter">Runde ${round + 1} von ${total}</div>` : "";
+  const facts = v.market == null ? "" : `<div class="facts">${payLine(v)}<div class="perf"><span>Leistung</span>${stars(v.stars)}</div></div>`;
   return `
-    ${round != null ? `<div class="counter">Runde ${round + 1} von ${total}</div>` : ""}
+    ${head}
     <div class="person">
       <div class="avatar">${avatar(v.id)}</div>
       <div><h2>${esc(v.name)}</h2><div class="role">${esc(v.role)}</div></div>
     </div>
-    <div class="facts">${payLine(v)}<div class="perf"><span>Leistung</span>${stars(v.stars)}</div></div>
+    ${facts}
     <div class="request">„${esc(v.request)}“</div>`;
 }
 
 export function delta(cost, mood) {
   const parts = [];
-  if (cost) parts.push(`<span class="d bad">💰 −${euro(cost)}</span>`);
+  if (cost > 0) parts.push(`<span class="d bad">💰 −${euro(cost)}</span>`);
+  if (cost < 0) parts.push(`<span class="d good">💰 +${euro(-cost)}</span>`);
   if (mood > 0) parts.push(`<span class="d good">😊 +${mood}</span>`);
   if (mood < 0) parts.push(`<span class="d bad">😊 ${mood}</span>`);
   if (!parts.length) parts.push(`<span class="d">± 0</span>`);

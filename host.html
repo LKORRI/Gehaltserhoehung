@@ -28,17 +28,17 @@
 
 <script type="module">
 import { connect } from "./db.js";
-import { ROUNDS, START_BUDGET, QUESTION_SECONDS, SUBTITLE, variantFor, replay, score, fired, euro } from "./game.js";
-import { card, esc, LETTERS, store, mineFrom, avatar } from "./ui.js";
+import { CARDS, MONTHS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, PLAY_SECONDS, euro } from "./cards.js";
+import { esc, store, avatar } from "./ui.js";
 
 const main = document.getElementById("main");
 const hinfo = document.getElementById("hinfo");
 const statusEl = document.getElementById("status");
 const params = new URLSearchParams(location.search);
 const localFlag = params.has("local") ? "&local" : "";
+const playSeconds = +(params.get("sek") || PLAY_SECONDS);
 
-let autoFor = null;
-let db, g, state = null, players = {}, answers = {}, tick = null, lastKey = "";
+let db, g, state = null, players = {}, runs = {}, feed = {}, tick = null, lastKey = "";
 
 const newCode = () => {
   const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -58,180 +58,152 @@ function qrSvg(text) {
   return qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
 }
 
-// Für jeden Spieler: welche Variante in Runde r, und was hat er geantwortet?
-function roundData(r) {
-  const out = {}; // variantId -> { v, players: n, opts: [n,n,n] }
-  for (const id of Object.keys(players)) {
-    const mine = mineFrom(answers, id);
-    const v = variantFor(r, replay(mine, r, r).flags);
-    const d = (out[v.id] ||= { v, n: 0, answered: 0, opts: v.options.map(() => 0) });
-    d.n++;
-    const a = mine[r];
-    if (a && a.opt != null) { d.answered++; d.opts[a.opt]++; }
-  }
-  return Object.values(out).sort((a, b) => b.n - a.n);
+const crew = () => ["sandra", "martin", "thomas", "anna", "kevin", "brigitteKevin", "julia", "joerg", "lukas"].map((id) => `<span class="mini">${avatar(id)}</span>`).join("");
+
+function chips(el) {
+  const names = Object.values(players).sort((a, b) => a.t - b.t);
+  const have = new Set([...el.children].map((c) => c.dataset.k));
+  names.forEach((p) => {
+    const k = p.name + p.t;
+    if (have.has(k)) return;
+    const s = document.createElement("span");
+    s.className = "chip"; s.dataset.k = k; s.textContent = p.name;
+    el.appendChild(s);
+  });
 }
 
 function lobby() {
-  const names = Object.values(players).sort((a, b) => a.t - b.t);
   const url = playerUrl();
   setMain(`
     <div class="lobby">
       <div>
         <h1>Gehalts&shy;erhöhung<em>!</em></h1>
-        <p class="lead"><b>${esc(SUBTITLE)}</b><br>Ihr seid Chefs einer Bank. ${ROUNDS.length} Leute wollen mehr Geld, ihr habt ${euro(START_BUDGET)} im Monat. Budget überzogen? Raus. Stimmung im Keller? Die Leute kündigen.</p>
-        <div class="crew">${["sandra","martin","joerg","thomas","anna","julia","kevin","brigitteBaby"].map((id) => `<span class="mini">${avatar(id)}</span>`).join("")}</div>
+        <p class="lead"><b>${esc(SUBTITLE)}</b> 12 Monate, 12 Leute wollen mehr Geld. Du hast ${euro(START_BUDGET)} Budget und ${START_TEAM} Teamfrieden. Fällt eins unter 0, fliegst du raus.</p>
+        <div class="goal">🏆 Perfektes Jahr: <b>${MAX_SCORE} Punkte</b>. Wer kommt am nächsten ran?</div>
+        <div class="crew">${crew()}</div>
         <div class="count" id="cnt"></div>
         <div class="players" id="pl"></div>
       </div>
       <div class="qrbox">${qrSvg(url)}<div class="url">${esc(url.replace(/^https?:\/\//, ""))}</div><div class="source">Spielcode ${esc(g)}</div></div>
     </div>`, "lobby");
-  document.getElementById("cnt").textContent = names.length === 1 ? "1 Chef*in ist dabei" : `${names.length} Chefs sind dabei`;
-  const pl = document.getElementById("pl");
-  const have = new Set([...pl.children].map((c) => c.dataset.k));
-  names.forEach((p) => {
-    const k = p.name + p.t;
-    if (have.has(k)) return;
-    const el = document.createElement("span");
-    el.className = "chip"; el.dataset.k = k; el.textContent = p.name;
-    pl.appendChild(el);
-  });
-  hinfo.innerHTML = "";
+  const n = Object.keys(players).length;
+  document.getElementById("cnt").textContent = n === 1 ? "1 Chef*in ist dabei" : `${n} Chefs sind dabei`;
+  chips(document.getElementById("pl"));
+  hinfo.innerHTML = `<span>Leertaste startet ${Math.round(playSeconds / 60)} Minuten Spielzeit</span>`;
 }
 
-function question() {
-  const r = state.idx;
-  const data = roundData(r);
-  const np = Object.keys(players).length;
-  const many = data.length > 1;
-  const key = "q" + r + "-" + data.map((d) => d.v.id + d.n).join(",");
-  if (!many) {
-    const v = data[0]?.v || variantFor(r, {});
-    setMain(`
-      <div class="qgrid">
-        <div class="card">${card(v, { round: r, total: ROUNDS.length })}</div>
-        <div class="hopts">${v.options.map((o, i) => `<div class="hopt"><span class="letter">${LETTERS[i]}</span><span class="txt">${esc(o.label)}</span></div>`).join("")}</div>
-      </div>`, key);
-  } else {
-    setMain(`
-      <div class="branch">
-        <h2 class="bhead">Runde ${r + 1}: Je nachdem, wie ihr bisher entschieden habt, klopft bei euch jemand anderes an 🚪</h2>
-        <div class="bgrid">
-          ${data.map((d) => `<div class="card small"><div class="share-tag">bei ${Math.round((d.n / np) * 100)} % von euch</div>${card(d.v)}</div>`).join("")}
+function ranking() {
+  return Object.entries(players).filter(([, p]) => p.best != null).map(([id, p]) => ({ id, name: p.name, best: p.best, tries: Object.keys(runs[id] || {}).length }))
+    .sort((a, b) => b.best - a.best);
+}
+
+function allRuns() {
+  return Object.values(runs).flatMap((r) => Object.values(r || {}));
+}
+
+function playView() {
+  const rows = ranking();
+  const events = Object.values(feed).sort((a, b) => b.t - a.t).slice(0, 6);
+  const nRuns = allRuns().length;
+  const medals = ["🥇", "🥈", "🥉"];
+  setMain(`
+    <div class="playgrid">
+      <div class="leftcol">
+        <div class="bigclock" id="clock"></div>
+        <div class="qrmini">${qrSvg(playerUrl())}<span>Noch nicht dabei?<br>Jetzt scannen!</span></div>
+        <div class="ticker">
+          <div class="counter">Live aus der Chefetage</div>
+          ${events.map((e) => `<div class="tick"><b>${esc(e.name)}</b> ${esc(e.text)}</div>`).join("") || `<div class="tick muted2">Noch niemand hat ein Jahr beendet …</div>`}
         </div>
-      </div>`, key);
-  }
+      </div>
+      <div>
+        <h2 class="lbtitle">Rangliste <span class="muted">Perfektes Jahr: ${MAX_SCORE} · ${nRuns} ${nRuns === 1 ? "Versuch" : "Versuche"}</span></h2>
+        <div class="board">
+          ${rows.slice(0, 8).map((r, i) => `<div class="brow ${r.best === MAX_SCORE ? "perfect" : ""}"><span class="pos">${medals[i] || i + 1}</span><span>${esc(r.name)} <small>${r.tries}× gespielt</small></span><span class="pts">${r.best}</span></div>`).join("") || `<p class="empty">Gleich tauchen hier die ersten Ergebnisse auf …</p>`}
+        </div>
+      </div>
+    </div>`, "play-" + JSON.stringify(rows.slice(0, 8).map((r) => [r.name, r.best, r.tries])) + events.map((e) => e.t).join(",") + nRuns);
   clearInterval(tick);
   const upd = () => {
-    if (!state || state.phase !== "question") return clearInterval(tick);
-    const left = Math.max(0, Math.ceil((QUESTION_SECONDS * 1000 - (db.now() - state.startedAt)) / 1000));
-    const total = roundData(state.idx).reduce((s, d) => s + d.answered, 0);
-    hinfo.innerHTML = `<span>${total} / ${np} entschieden</span><span class="clock">${left}</span>`;
-    if ((left <= 0 || (np > 0 && total >= np)) && autoFor !== state.startedAt) {
-      autoFor = state.startedAt; clearInterval(tick);
-      const st = state.startedAt;
-      setTimeout(() => state.phase === "question" && state.startedAt === st && go(+1), 1200);
-    }
+    const left = Math.max(0, Math.ceil(((state.endsAt || 0) - db.now()) / 1000));
+    const el = document.getElementById("clock");
+    if (el) { el.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`; el.classList.toggle("hot", left <= 30); }
+    hinfo.innerHTML = `<span>${Object.keys(players).length} spielen mit</span>`;
+    if (left <= 0 && state.phase === "play") { clearInterval(tick); go(+1); }
   };
-  upd(); tick = setInterval(upd, 250);
-}
-
-function reveal() {
-  const r = state.idx;
-  const data = roundData(r);
-  const total = data.reduce((s, d) => s + d.answered, 0);
-  const firedNow = Object.keys(players).filter((id) => replay(mineFrom(answers, id), r + 1).budget < 0).length;
-  const blocks = data.map((d) => {
-    const top = d.opts.indexOf(Math.max(...d.opts));
-    return `
-      <div class="rblock">
-        <div class="reveal-head"><span class="mini">${avatar(d.v.id)}</span>${esc(d.v.name)} <span class="muted">· ${d.n} ${d.n === 1 ? "Chef*in" : "Chefs"}</span></div>
-        <div class="hopts">
-          ${d.v.options.map((o, i) => {
-            const p = d.answered ? Math.round((d.opts[i] / d.answered) * 100) : 0;
-            return `<div class="hopt ${i === top && d.answered ? "top" : ""}"><div class="share" data-w="${p}"></div><span class="letter">${LETTERS[i]}</span><span class="pct">${p} %</span><span class="txt">${esc(o.label)}<br><small>${esc(o.reaction)}</small></span></div>`;
-          }).join("")}
-        </div>
-      </div>`;
-  }).join("");
-  if (setMain(`<div class="reveal ${data.length > 1 ? "two" : ""}">${blocks}</div>`, "r" + r + "-" + total)) {
-    requestAnimationFrame(() => requestAnimationFrame(() => main.querySelectorAll(".share").forEach((el) => (el.style.width = el.dataset.w + "%"))));
-  }
-  hinfo.innerHTML = `<span>${total} Antworten</span>${firedNow ? `<span class="warnpill">⚠️ ${firedNow} über Budget</span>` : ""}`;
-}
-
-function results() {
-  return Object.keys(players).map((id) => {
-    const s = replay(mineFrom(answers, id), ROUNDS.length);
-    return { name: players[id].name, s, sc: score(s) };
-  }).sort((a, b) => b.sc - a.sc);
-}
-
-function bankPath() {
-  const ans = {}; let flags = {};
-  ROUNDS.forEach((_, r) => { const v = variantFor(r, flags); ans[r] = { opt: v.bank }; flags = replay(ans, r + 1).flags; });
-  return replay(ans, ROUNDS.length);
+  upd(); tick = setInterval(upd, 500);
 }
 
 function final() {
-  const rows = results();
-  const nFired = rows.filter((x) => fired(x.s)).length;
-  const avgMood = rows.length ? Math.round(rows.reduce((s, x) => s + x.s.mood, 0) / rows.length) : 0;
-  const medals = ["🥇", "🥈", "🥉", "4", "5"];
+  clearInterval(tick);
+  const rows = ranking();
+  const rs = allRuns();
+  const fired = rs.filter((r) => r.over === "budget").length;
+  const lost = rs.filter((r) => r.over === "team").length;
+  const perfect = rows.filter((r) => r.best === MAX_SCORE).length;
+  const pod = [rows[1], rows[0], rows[2]];
   setMain(`
     <div class="final">
       <div>
-        <h2>Die besten Chefs 🏆</h2>
-        <div class="board">
-          ${rows.filter((x) => !fired(x.s)).slice(0, 5).map((x, i) => `<div class="brow"><span class="pos">${medals[i]}</span><span>${esc(x.name)}<br><small>💰 ${euro(x.s.budget)} · 😊 ${x.s.mood}</small></span><span class="pts">${x.sc}</span></div>`).join("") || `<p class="empty">Niemand hat überlebt 😅</p>`}
+        <h2>Die gerechtesten Chefs 🏆</h2>
+        <div class="podium">
+          ${pod.map((r, i) => r ? `<div class="pod p${[2, 1, 3][i]}"><div class="pname">${esc(r.name)}</div><div class="ppts">${r.best}</div><div class="pblock">${[2, 1, 3][i]}</div></div>` : `<div class="pod"></div>`).join("")}
         </div>
       </div>
       <div class="bigstats">
-        <div class="bigstat"><b>📞 ${nFired}</b><span>${nFired === 1 ? "Chef*in ist" : "Chefs sind"} rausgeflogen</span></div>
-        <div class="bigstat"><b>😊 ${avgMood}</b><span>durchschnittliche Stimmung</span></div>
-        ${rows.filter((x) => fired(x.s)).length ? `<div class="firedlist">Rausgeflogen: ${rows.filter((x) => fired(x.s)).map((x) => esc(x.name)).join(", ")}</div>` : ""}
+        <div class="bigstat"><b>📞 ${fired}</b><span>Mal vom Aufsichtsrat gefeuert</span></div>
+        <div class="bigstat"><b>🚪 ${lost}</b><span>Mal das Team verloren</span></div>
+        <div class="bigstat"><b>🏆 ${perfect}</b><span>${perfect === 1 ? "perfektes Jahr" : "perfekte Jahre"} (${MAX_SCORE} Punkte)</span></div>
       </div>
-    </div>`, "final-" + rows.map((x) => x.sc).join(","));
-  hinfo.innerHTML = "";
+    </div>`, "final-" + rows.map((r) => r.best).join(","));
+  hinfo.innerHTML = `<span>${rs.length} Versuche insgesamt</span>`;
 }
 
 function bank() {
-  const b = bankPath();
+  const rs = allRuns();
   setMain(`
     <div class="bankview">
-      <h2>Und so hätte die Raiffeisenbank entschieden 🏦</h2>
-      <div class="bankgrid">
-        ${b.history.map((h) => `
-          <div class="bcard">
-            <div class="reveal-head"><span class="mini">${avatar(h.v.id)}</span>${esc(h.v.name)} <span class="pill">${esc(h.v.criterion)}</span></div>
-            <div class="bdec">${esc(h.o.label)}</div>
-            <div class="bquote">„${esc(h.v.quote)}“ <span class="source">${esc(h.v.source)}</span></div>
-          </div>`).join("")}
+      <h2>So hätte die Raiffeisenbank entschieden 🏦</h2>
+      <div class="bankgrid12">
+        ${CARDS.map((c, i) => {
+          const k = c.options.findIndex((o) => o.bank);
+          const reached = rs.filter((r) => r.answers && r.answers.length > i);
+          const same = reached.filter((r) => r.answers[i] === k).length;
+          const pct = reached.length ? Math.round((same / reached.length) * 100) : null;
+          return `<div class="bcard">
+            <div class="reveal-head"><span class="mini">${avatar(c.id)}</span>${esc(c.name)}<span class="pill">${esc(c.criterion)}</span></div>
+            <div class="bdec">${esc(c.options[k].label)}</div>
+            <div class="bfoot"><span>Interview, Fr. ${esc(c.source.replace(/^Fragen? /, "").replace(" und ", ", "))}</span>${pct != null ? `<b>${pct} % von euch</b>` : ""}</div>
+          </div>`;
+        }).join("")}
       </div>
-      <div class="banksum">Ergebnis der echten Bank: 💰 ${euro(b.budget)} übrig · 😊 Stimmung ${b.mood} · ${score(b)} Punkte</div>
-    </div>`, "bank");
+    </div>`, "bank-" + rs.length);
   hinfo.innerHTML = "";
 }
 
 function render() {
   if (!state) return;
-  ({ lobby, question, reveal, final, bank })[state.phase]?.();
+  ({ lobby, play: playView, final, bank })[state.phase]?.();
   statusEl.textContent = `Spielcode ${g} · ${db.mode === "local" ? "lokaler Testmodus" : "live"} · Leertaste = weiter`;
 }
 
-const STEPS = [{ phase: "lobby" }, ...ROUNDS.flatMap((_, i) => [{ phase: "question", idx: i }, { phase: "reveal", idx: i }]), { phase: "final" }, { phase: "bank" }];
-const stepIndex = () => STEPS.findIndex((s) => s.phase === state.phase && (s.idx ?? null) === (state.idx ?? null));
+const STEPS = ["lobby", "play", "final", "bank"];
 async function go(d) {
-  const s = STEPS[Math.max(0, Math.min(STEPS.length - 1, stepIndex() + d))];
-  await db.set(`games/${g}/state`, { phase: s.phase, idx: s.idx ?? null, startedAt: db.now() });
+  const i = Math.max(0, Math.min(STEPS.length - 1, STEPS.indexOf(state.phase) + d));
+  const phase = STEPS[i];
+  if (phase === state.phase) return;
+  const next = { phase, startedAt: db.now() };
+  if (phase === "play") next.endsAt = state.phase === "lobby" ? db.now() + playSeconds * 1000 : state.endsAt || db.now() + 60000;
+  if (phase === "play" && next.endsAt <= db.now()) next.endsAt = db.now() + 60000; // zurück in die Spielzeit: 1 Minute extra
+  await db.set(`games/${g}/state`, next);
 }
 
 async function newGame() {
   g = newCode();
   store.set("lohnspiel-host-game", g);
-  history.replaceState(null, "", `?g=${g}${localFlag}`);
+  history.replaceState(null, "", `?g=${g}${localFlag}${params.get("sek") ? "&sek=" + playSeconds : ""}`);
   lastKey = "";
-  await db.set(`games/${g}`, { state: { phase: "lobby", idx: null, startedAt: db.now() }, created: db.now() });
+  await db.set(`games/${g}`, { state: { phase: "lobby", startedAt: db.now() }, created: db.now() });
   subscribe();
 }
 
@@ -240,7 +212,8 @@ function subscribe() {
   unsubs.forEach((u) => u && u()); unsubs = [];
   unsubs.push(db.onValue(`games/${g}/state`, (v) => { state = v; render(); }));
   unsubs.push(db.onValue(`games/${g}/players`, (v) => { players = v || {}; render(); }));
-  unsubs.push(db.onValue(`games/${g}/answers`, (v) => { answers = v || {}; if (state && state.phase !== "question") render(); }));
+  unsubs.push(db.onValue(`games/${g}/runs`, (v) => { runs = v || {}; render(); }));
+  unsubs.push(db.onValue(`games/${g}/feed`, (v) => { feed = v || {}; render(); }));
 }
 
 document.getElementById("bNext").onclick = () => go(+1);

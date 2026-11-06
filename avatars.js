@@ -64,13 +64,18 @@ function accessory(acc) {
 
 // Figuren aus img/leute.svg (Freepik, 3x3-Raster). Index = Position im Raster, zeilenweise.
 const CELLS = [[102.6, 82.8], [248.9, 82.8], [395.2, 82.8], [102.6, 232.7], [248.9, 232.7], [395.2, 232.7], [102.6, 382.6], [248.9, 382.6], [395.2, 382.6]];
-const CAST = { martin: 0, brigitteBaby: 2, brigitteKevin: 2, joerg: 3, sandra: 4, anna: 5, julia: 6, thomas: 7, kevin: 8 };
-const BG = { martin: C.blue, brigitteBaby: C.olive, brigitteKevin: C.olive, joerg: C.yellow, sandra: C.pink, anna: C.blue, julia: C.yellow, thomas: C.lilac, kevin: C.olive };
+const CAST = { lukas: 1, martin: 0, brigitteBaby: 2, brigitteKevin: 2, joerg: 3, sandra: 4, anna: 5, julia: 6, thomas: 7, kevin: 8 };
+const BG = { lukas: C.pink, martin: C.blue, brigitteBaby: C.olive, brigitteKevin: C.olive, joerg: C.yellow, sandra: C.pink, anna: C.blue, julia: C.yellow, thomas: C.lilac, kevin: C.olive };
 const BOX = 150;
+const EMOJI = { vertrieb: ["👥", C.yellow], ferien: ["🏛️", C.blue], max: ["😎", C.peach] };
 const BADGE = { happy: "😊", sad: "😔", angry: "😤", neutral: "" };
 
 export function avatar(id, mood = null) {
   const i = CAST[id];
+  if (EMOJI[id]) {
+    const badge = mood && BADGE[mood] ? `<span class="badge">${BADGE[mood]}</span>` : "";
+    return `<span class="ava photo"><span class="crop emo" style="background:${EMOJI[id][1]}">${EMOJI[id][0]}</span>${badge}</span>`;
+  }
   if (i == null) return blobAvatar(id, mood || "neutral");
   const [cx, cy] = CELLS[i];
   const x = cx - BOX / 2, y = cy - BOX / 2;

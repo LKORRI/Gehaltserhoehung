@@ -2,16 +2,18 @@
 
 Handy-Spiel für die Präsentation der Seminararbeit „Relative Lohngerechtigkeit in der Entlohnungspraxis der Raiffeisenbank Bruck-Carnuntum“ (PFO).
 
-Das Publikum spielt die Geschäftsleitung einer Bank. Sechs Mitarbeitende kommen mit einer Bitte um mehr Geld. Jeder hat 1.500 € pro Monat für Gehaltserhöhungen: Wer das Budget überzieht, fliegt raus; wer die Stimmung ruiniert, verliert sein Team. Je nach Entscheidung klopft in späteren Runden jemand anderes an (z. B. Jörg, wenn Sandra mehr bekommen hat). Am Ende zeigt der Beamer die Rangliste und wie die echte Raiffeisenbank laut Interview entschieden hätte.
+Jeder spielt für sich am Handy die Geschäftsleitung einer Bank: 12 Monate, 12 Leute mit einer Bitte, je 3 Antworten. Zwei Anzeigen: Budget (Start 1.500 €) und Teamfrieden (Start 30). Fällt eine unter 0, ist das Spiel vorbei. Punkte = 20 (Jahr geschafft) + Teamfrieden + Restbudget ÷ 10. Den Höchstwert von 190 Punkten erreicht nur, wer genau so entscheidet wie die echte Raiffeisenbank laut Interview. Man kann während der Spielzeit beliebig oft spielen, der beste Versuch zählt.
+
+Der Beamer zeigt Countdown, Live-Rangliste und Ticker, danach Siegertreppchen und „So hätte die Raiffeisenbank entschieden“.
 
 ## Seiten
 
-- `host.html` – Beamer: QR-Code, Runden, Auflösung, Rangliste, Entscheidungen der echten Bank. Leertaste / Pfeil rechts = weiter, Pfeil links = zurück.
+- `host.html` – Beamer: Start → Spielzeit (Standard 4 Minuten, ändern mit `?sek=300`) → Siegertreppchen → Auflösung. Leertaste / Pfeil rechts = weiter, Pfeil links = zurück.
 - `index.html` – Handy-Ansicht (über den QR-Code).
 
 ## Inhalte ändern
 
-Alle Personen, Beträge, Reaktionen und Zitate stehen in `game.js`. Figuren-Zuordnung in `avatars.js`.
+Alle Karten, Beträge, Reaktionen und Zitate stehen in `cards.js`. Nach Änderungen prüfen, dass der Bank-Weg weiterhin der einzige Höchstwert ist. Figuren-Zuordnung in `avatars.js`.
 
 ## Technik
 
