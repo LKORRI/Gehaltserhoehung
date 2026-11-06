@@ -342,3 +342,4 @@ b { font-weight: 800; }
 .final .board { gap: .55em; } .final .board .brow { font-size: 1.15em; padding: .45em 1em; }
 .bubblewrap { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .bubblewrap.held .bubble { transform: scale(.98); transition: transform .15s; }
+.bubblewrap, .bubblewrap * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }

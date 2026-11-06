@@ -6,7 +6,7 @@
 <title>Gehaltserhöhung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <div class="phone">
@@ -188,10 +188,15 @@ function showBubble(i, last) {
     bar.style.animationPlayState = "running"; wrap.classList.remove("held");
   };
   bubbleTimer = setTimeout(done, REACTION_MS);
-  wrap.addEventListener("pointerdown", (e) => { e.preventDefault(); downT = Date.now(); pause(); });
-  wrap.addEventListener("pointerup", () => { if (Date.now() - downT < 250) done(); else resume(); });
-  wrap.addEventListener("pointercancel", resume);
-  wrap.addEventListener("pointerleave", resume);
+  const down = (e) => { e.preventDefault(); downT = Date.now(); pause(); };
+  const up = (e) => { e.preventDefault(); if (!downT) return; const t = Date.now() - downT; downT = 0; if (t < 250) done(); else resume(); };
+  // Touch (iPhone/Android) und Maus getrennt, damit lange Drücken nicht als Abbruch zählt
+  wrap.addEventListener("touchstart", down, { passive: false });
+  wrap.addEventListener("touchend", up, { passive: false });
+  wrap.addEventListener("touchcancel", () => { downT = 0; resume(); });
+  wrap.addEventListener("mousedown", down);
+  wrap.addEventListener("mouseup", up);
+  wrap.addEventListener("mouseleave", () => { if (downT) { downT = 0; resume(); } });
   wrap.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
