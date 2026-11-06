@@ -167,8 +167,8 @@ function bank() {
       <div class="bankgrid12">
         ${CARDS.map((c, i) => {
           const k = c.options.findIndex((o) => o.bank);
-          const reached = rs.filter((r) => r.answers && r.answers.length > i);
-          const same = reached.filter((r) => r.answers[i] === k).length;
+          const reached = rs.filter((r) => r.picks && r.picks[c.id] != null);
+          const same = reached.filter((r) => r.picks[c.id] === k).length;
           const pct = reached.length ? Math.round((same / reached.length) * 100) : null;
           return `<div class="bcard">
             <div class="reveal-head"><span class="mini">${avatar(c.id)}</span>${esc(c.name)}<span class="pill">${esc(c.criterion)}</span></div>

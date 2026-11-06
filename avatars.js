@@ -64,10 +64,10 @@ function accessory(acc) {
 
 // Figuren aus img/leute.svg (Freepik, 3x3-Raster). Index = Position im Raster, zeilenweise.
 const CELLS = [[102.6, 82.8], [248.9, 82.8], [395.2, 82.8], [102.6, 232.7], [248.9, 232.7], [395.2, 232.7], [102.6, 382.6], [248.9, 382.6], [395.2, 382.6]];
-const CAST = { lukas: 1, martin: 0, brigitteBaby: 2, brigitteKevin: 2, joerg: 3, sandra: 4, anna: 5, julia: 6, thomas: 7, kevin: 8 };
-const BG = { lukas: C.pink, martin: C.blue, brigitteBaby: C.olive, brigitteKevin: C.olive, joerg: C.yellow, sandra: C.pink, anna: C.blue, julia: C.yellow, thomas: C.lilac, kevin: C.olive };
+const CAST = { brigitte: 2, lukas: 1, martin: 0, brigitteBaby: 2, brigitteKevin: 2, joerg: 3, sandra: 4, anna: 5, julia: 6, thomas: 7, kevin: 8 };
+const BG = { brigitte: C.olive, lukas: C.pink, martin: C.blue, brigitteBaby: C.olive, brigitteKevin: C.olive, joerg: C.yellow, sandra: C.pink, anna: C.blue, julia: C.yellow, thomas: C.lilac, kevin: C.olive };
 const BOX = 150;
-const EMOJI = { vertrieb: ["👥", C.yellow], ferien: ["🏛️", C.blue], max: ["😎", C.peach] };
+const EMOJI = { vertrieb: ["👥", C.yellow], ferien: ["🏛️", C.blue], max: ["😎", C.peach], gerhard: ["👴", C.lilac], zert: ["📜", C.blue] };
 const BADGE = { happy: "😊", sad: "😔", angry: "😤", neutral: "" };
 
 export function avatar(id, mood = null) {

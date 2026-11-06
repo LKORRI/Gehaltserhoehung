@@ -22,7 +22,7 @@
 
 <script type="module">
 import { connect } from "./db.js";
-import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, REACTION_MS, play, score, euro } from "./cards.js";
+import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, REACTION_MS, play, score, euro, costOf } from "./cards.js";
 import { card, delta, esc, LETTERS, randomId, store, session, avatar } from "./ui.js";
 import { moodOf } from "./avatars.js";
 
@@ -73,7 +73,7 @@ function noGame() {
 function rulesHtml() {
   return `
     <div class="rules">
-      <div>💬 <b>${CARDS.length} Leute wollen mehr Geld.</b> Du wählst jeweils eine von 3 Antworten.</div>
+      <div>💬 <b>${CARDS.length} Leute wollen mehr Geld.</b> Du wählst jeweils eine von 3 Antworten. Achtung: Manches spricht sich rum …</div>
       <div>💰 <b>Budget</b> ${euro(START_BUDGET)} · 😊 <b>Teamfrieden</b> ${START_TEAM}. Fällt eins unter 0, <b>fliegst du raus.</b></div>
       <div>🏆 Am Ende zählen Teamfrieden + Restbudget. <b>Perfekt: ${MAX_SCORE} Punkte.</b> Du kannst so oft spielen, wie du willst.</div>
     </div>`;
@@ -120,11 +120,11 @@ function cardScreen() {
   const s = play(run.answers);
   if (s.over || s.done) return; // letzte Sprechblase läuft noch
   updateHud(s);
-  const c = CARDS[i];
+  const c = s.next;
   if (setScreen(`
-    <div class="card">${card(c, { i, total: CARDS.length })}</div>
+    <div class="card ${c.extra ? "extra" : ""}">${card(c, { i: s.base, total: CARDS.length })}</div>
     <div class="options">
-      ${c.options.map((o, k) => `<button class="opt" data-letter="${LETTERS[k]}" data-k="${k}">${esc(o.label)}</button>`).join("")}
+      ${c.options.map((o, k) => `<button class="opt" data-letter="${LETTERS[k]}" data-k="${k}"><span>${esc(o.label)}</span><span class="cost ${o.cost > 0 ? "neg" : ""}">${o.cost > 0 ? "−" + euro(o.cost) : "0 €"}</span></button>`).join("")}
     </div>`, `card-${run.id}-${i}`)) {
     app.querySelectorAll(".opt").forEach((b) => (b.onclick = () => choose(+b.dataset.k)));
   }
@@ -143,19 +143,27 @@ function choose(k) {
 }
 
 function flashHud(a, b) {
-  const fl = (el, d) => { if (!d) return; el.classList.remove("flash-bad", "flash-good"); void el.offsetWidth; el.classList.add(d < 0 ? "flash-bad" : "flash-good"); };
-  fl(document.getElementById("hBudget"), b.budget - a.budget);
-  fl(document.getElementById("hTeamN").parentElement, b.team - a.team);
+  const fl = (el, d, txt) => {
+    if (!d) return;
+    el.classList.remove("flash-bad", "flash-good"); void el.offsetWidth; el.classList.add(d < 0 ? "flash-bad" : "flash-good");
+    const f = document.createElement("span");
+    f.className = "floatd " + (d < 0 ? "bad" : "good"); f.textContent = txt;
+    el.appendChild(f); setTimeout(() => f.remove(), 2600);
+  };
+  const db_ = b.budget - a.budget, dt = b.team - a.team;
+  fl(document.getElementById("hBudget"), db_, (db_ > 0 ? "+" : "−") + euro(Math.abs(db_)));
+  fl(document.getElementById("hTeamN").parentElement, dt, (dt > 0 ? "+" : "") + dt);
 }
 
 function showBubble(i, last) {
-  const c = CARDS[i], o = c.options[run.answers[i]];
+  const h = play(run.answers).history[i], c = h.card, o = h.o;
   const wrap = document.createElement("div");
   wrap.className = "bubblewrap";
   wrap.innerHTML = `<div class="bubble">
       <div class="bhead"><div class="avatar">${avatar(c.id, moodOf(o))}</div><div class="btext">${esc(o.reaction)}</div></div>
-      <div class="deltas">${delta(o.cost, o.team)}</div>
+      <div class="deltas big">${delta(costOf(o), o.team)}</div>
       <div class="bbar"><i style="animation-duration:${REACTION_MS}ms"></i></div>
+      <div class="btap">Antippen = weiter</div>
     </div>`;
   document.body.appendChild(wrap);
   const done = () => {
@@ -172,12 +180,13 @@ function showBubble(i, last) {
 async function finishRun(s) {
   const sc = score(s);
   const best = me.best ?? -1;
-  const who = CARDS[s.month - 1].name;
+  const who = s.history[s.history.length - 1].card.name;
   const ev = s.over === "budget" ? `wurde nach ${who} vom Aufsichtsrat gefeuert 📞`
     : s.over === "team" ? `hat bei ${who} das Team verloren 🚪`
     : sc === MAX_SCORE ? `hat ${MAX_SCORE} Punkte, perfekt! 🏆` : `hat durchgehalten: ${sc} Punkte 🎉`;
-  const upd = { [`runs/${pid}/${run.id}`]: { answers: run.answers, score: sc, month: s.month, over: s.over || null, t: db.now() } };
-  if (sc > best) Object.assign(upd, { [`players/${pid}/best`]: sc, [`players/${pid}/bestAnswers`]: run.answers });
+  const picks = Object.fromEntries(s.history.map((h) => [h.id, h.opt]));
+  const upd = { [`runs/${pid}/${run.id}`]: { answers: run.answers, picks, score: sc, month: s.month, over: s.over || null, t: db.now() } };
+  if (sc > best) Object.assign(upd, { [`players/${pid}/best`]: sc, [`players/${pid}/bestPicks`]: picks });
   upd[`feed/${db.now()}_${pid}`] = { name: me.name, text: ev, t: db.now() };
   await db.update(`games/${g}`, upd);
 }
@@ -186,8 +195,8 @@ function endScreen() {
   const s = play(run.answers);
   updateHud(s);
   const sc = score(s);
-  const head = s.over === "budget" ? { e: "📞", t: "Gefeuert!", x: `Nach Gespräch ${s.month} ist das Budget gesprengt. Der Aufsichtsrat hat angerufen.` }
-    : s.over === "team" ? { e: "🚪", t: "Dein Team ist weg!", x: `Nach Gespräch ${s.month} ist der Teamfrieden im Keller. Reihenweise Kündigungen.` }
+  const head = s.over === "budget" ? { e: "📞", t: "Gefeuert!", x: `Bei ${s.history[s.history.length - 1].card.name} ist das Budget gesprengt. Der Aufsichtsrat hat angerufen.` }
+    : s.over === "team" ? { e: "🚪", t: "Dein Team ist weg!", x: `Bei ${s.history[s.history.length - 1].card.name} ist der Teamfrieden im Keller. Reihenweise Kündigungen.` }
     : sc === MAX_SCORE ? { e: "🏆", t: "Perfekt!", x: "Du entscheidest genau wie die echte Raiffeisenbank. Respekt." }
     : { e: "🎉", t: "Überlebt!", x: "Gar nicht schlecht. Aber da geht noch mehr." };
   setScreen(`
@@ -199,9 +208,9 @@ function endScreen() {
       <div class="stats">
         <div><b class="${s.budget < 0 ? "neg" : ""}">${euro(s.budget)}</b><span>Budget</span></div>
         <div><b>${s.team}</b><span>Teamfrieden</span></div>
-        <div><b>${s.matches}/${s.month}</b><span>wie die Bank</span></div>
+        <div><b>${s.matches}/${s.base}</b><span>wie die Bank</span></div>
       </div>
-      <p class="source" style="margin-top:12px">Dein bester Versuch: ${Math.max(sc, me.best ?? 0)} Punkte</p>
+      <p class="source" style="margin-top:12px">Dein bester Versuch: ${Math.max(sc, me.best ?? 0) === 1 ? "1 Punkt" : Math.max(sc, me.best ?? 0) + " Punkte"}</p>
     </div>
     ${open() ? `<button class="btn" id="again">Nochmal spielen 🔁</button>` : ""}`, `end-${run.id}`);
   const ag = document.getElementById("again");
@@ -211,9 +220,9 @@ function endScreen() {
 function closedScreen() {
   updateHud(null);
   const best = me.best ?? null;
-  const ans = me.bestAnswers || [];
-  const rows = CARDS.map((c, i) => {
-    const mine = ans[i];
+  const ans = me.bestPicks || {};
+  const rows = CARDS.map((c) => {
+    const mine = ans[c.id];
     const bankK = c.options.findIndex((o) => o.bank);
     const ok = mine === bankK;
     return `<div class="hist"><span class="hn"><span class="mini">${avatar(c.id)}</span>${esc(c.name)}</span><span>${mine == null ? "–" : ok ? "✅" : "❌ " + esc(c.options[bankK].label)}</span></div>`;

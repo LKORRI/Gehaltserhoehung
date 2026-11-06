@@ -24,7 +24,7 @@ export function payLine(v) {
 }
 
 export function card(v, { i, total } = {}) {
-  const head = total ? `<div class="counter">Gespräch ${i + 1}/${total}</div>` : "";
+  const head = v.extra ? `<div class="counter warn">⚠️ Extra-Gespräch · Das hat sich rumgesprochen …</div>` : total ? `<div class="counter">Gespräch ${i + 1}/${total}</div>` : "";
   return `
     ${head}
     <div class="person">
@@ -37,11 +37,11 @@ export function card(v, { i, total } = {}) {
 
 export function delta(cost, mood) {
   const parts = [];
-  if (cost > 0) parts.push(`<span class="d bad">💰 −${euro(cost)}</span>`);
-  if (cost < 0) parts.push(`<span class="d good">💰 +${euro(-cost)}</span>`);
-  if (mood > 0) parts.push(`<span class="d good">😊 +${mood}</span>`);
-  if (mood < 0) parts.push(`<span class="d bad">😊 ${mood}</span>`);
-  if (!parts.length) parts.push(`<span class="d">± 0</span>`);
+  if (cost > 0) parts.push(`<span class="d bad">💰 Budget −${euro(cost)}</span>`);
+  if (cost < 0) parts.push(`<span class="d good">💰 Budget +${euro(-cost)}</span>`);
+  if (mood > 0) parts.push(`<span class="d good">😊 Team +${mood}</span>`);
+  if (mood < 0) parts.push(`<span class="d bad">😊 Team −${-mood}</span>`);
+  if (!parts.length) parts.push(`<span class="d">keine Auswirkung</span>`);
   return parts.join("");
 }
 

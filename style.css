@@ -307,3 +307,22 @@ b { font-weight: 800; }
 .count { margin-top: .8em; }
 .bankgrid12 { font-size: 1.3em; gap: 1em; margin-top: .4em; }
 .bankgrid12 .bfoot { font-size: .72em; white-space: nowrap; gap: .6em; }
+
+/* v4: Kosten auf Buttons, Extra-Gespräche, deutlichere Wirkung */
+.opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.opt .cost { flex: none; font-size: 13px; font-weight: 800; padding: 4px 9px; border-radius: 99px; background: var(--bg2); color: var(--muted); white-space: nowrap; }
+.opt .cost.neg { background: var(--bad-bg); color: var(--bad); }
+.card.extra { border: 2px solid var(--red); }
+.counter.warn { color: var(--bad); text-transform: none; letter-spacing: 0; font-size: 14px; }
+.topbar { z-index: 30; }
+.chip-s { position: relative; }
+.chip-s.flash-bad, .chip-s.flash-good { animation-duration: 2.4s; }
+@keyframes flashBad { 0%, 70% { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); } 10% { transform: scale(1.18); } 30% { transform: scale(1); } }
+@keyframes flashGood { 0%, 70% { background: var(--good-bg); color: var(--good); border-color: var(--good); } 10% { transform: scale(1.18); } 30% { transform: scale(1); } }
+.floatd { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; font-size: 15px; font-weight: 900; padding: 3px 9px; border-radius: 99px; white-space: nowrap; animation: floatd 2.6s ease-out forwards; pointer-events: none; }
+.floatd.bad { background: var(--bad); color: #fff; }
+.floatd.good { background: var(--good); color: #fff; }
+@keyframes floatd { 0% { opacity: 0; transform: translate(-50%, -6px); } 10% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 8px); } }
+.bubblewrap { padding-top: 90px; }
+.deltas.big .d { font-size: 18px; padding: 7px 14px; }
+.bubble .btap { margin-top: 8px; font-size: 12px; opacity: .6; text-align: right; }
