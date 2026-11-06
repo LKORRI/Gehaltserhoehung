@@ -163,7 +163,7 @@ function showBubble(i, last) {
       <div class="bhead"><div class="avatar">${avatar(c.id)}</div><div class="btext">${esc(o.reaction)}</div></div>
       <div class="deltas big">${delta(costOf(o), o.team)}</div>
       <div class="bbar"><i style="animation-duration:${REACTION_MS}ms"></i></div>
-      <div class="btap">Antippen = weiter</div>
+      <div class="btap">Antippen = weiter · Halten = Pause</div>
     </div>`;
   document.body.appendChild(wrap);
   const done = () => {
@@ -173,8 +173,26 @@ function showBubble(i, last) {
     setTimeout(() => wrap.remove(), 250);
     if (last) { view = "end"; render(); }
   };
+  // Wie bei einer Instagram-Story: Antippen = weiter, Gedrückt halten = Pause
+  const bar = wrap.querySelector(".bbar i");
+  let left = REACTION_MS, startT = Date.now(), downT = 0;
+  const pause = () => {
+    if (!bubbleTimer || bubbleTimer === -1) return;
+    clearTimeout(bubbleTimer); bubbleTimer = -1;
+    left -= Date.now() - startT;
+    bar.style.animationPlayState = "paused"; wrap.classList.add("held");
+  };
+  const resume = () => {
+    if (bubbleTimer !== -1) return;
+    startT = Date.now(); bubbleTimer = setTimeout(done, Math.max(0, left));
+    bar.style.animationPlayState = "running"; wrap.classList.remove("held");
+  };
   bubbleTimer = setTimeout(done, REACTION_MS);
-  wrap.onclick = done; // Antippen überspringt
+  wrap.addEventListener("pointerdown", (e) => { e.preventDefault(); downT = Date.now(); pause(); });
+  wrap.addEventListener("pointerup", () => { if (Date.now() - downT < 250) done(); else resume(); });
+  wrap.addEventListener("pointercancel", resume);
+  wrap.addEventListener("pointerleave", resume);
+  wrap.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
 async function finishRun(s) {
