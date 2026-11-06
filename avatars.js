@@ -70,7 +70,14 @@ const BOX = 150;
 const EMOJI = { vertrieb: ["👥", C.yellow], ferien: ["🏛️", C.blue], max: ["😎", C.peach], gerhard: ["👴", C.lilac], zert: ["📜", C.blue] };
 const BADGE = { happy: "😊", sad: "😔", angry: "😤", neutral: "" };
 
+// Eigene Figuren (Lorenz, auf Basis Freepik): img/people/<id>.svg, Hintergrund ist im Bild
+const PEOPLE_IMG = new Set(["sandra", "martin", "thomas", "anna", "klaus", "nicole", "florian", "peter", "brigitte", "gerhard"]);
+const GROUP = { vertrieb: ["peter", "sandra", "nicole"] };
+
 export function avatar(id, mood = null) {
+  const badgeP = mood && BADGE[mood] ? `<span class="badge">${BADGE[mood]}</span>` : "";
+  if (PEOPLE_IMG.has(id)) return `<span class="ava photo"><span class="crop"><img class="full" src="img/people/${id}.svg" alt=""></span>${badgeP}</span>`;
+  if (GROUP[id]) return `<span class="ava photo"><span class="crop group">${GROUP[id].map((g) => `<img src="img/people/${g}.svg" alt="">`).join("")}</span>${badgeP}</span>`;
   const i = CAST[id];
   if (EMOJI[id]) {
     const badge = mood && BADGE[mood] ? `<span class="badge">${BADGE[mood]}</span>` : "";

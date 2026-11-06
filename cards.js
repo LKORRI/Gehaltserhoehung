@@ -14,29 +14,29 @@ export const REACTION_MS = 4000;
 export const CARDS = [
   {
     id: "sandra", name: "Sandra", role: "Top-Kundenberaterin", salary: 3200, market: 3600, stars: 5,
-    request: "Die Sparkasse bietet mir 3.700 €. Der Vertrag ist schon in meiner Handtasche. 👜",
+    request: "Die Sparkasse bietet mir 3.700 €. Was ist euer Angebot, dass ich nicht gehe? 👜",
     options: [
       { label: "„Reisende soll man nicht aufhalten.“", cost: 0, team: -25, reaction: "Sandra geht. 40 Kunden gehen mit ihr. 🫠" },
       { label: "+200 € fix, Richtung Marktwert", cost: 200, team: 5, bank: true, reaction: "Sandra bleibt. Fair genug 🙂" },
-      { label: "+500 €, du bist unsere Beste!", cost: 500, team: -5, next: "joerg", reaction: "Sandra jubelt. In der Kaffeeküche wird getuschelt … 👀" },
+      { label: "+500 €, du bist unsere Beste!", cost: 500, team: -5, next: "peter", reaction: "Sandra jubelt. In der Kaffeeküche wird getuschelt … 👀" },
     ],
     criterion: "Markt statt Leistung", source: "Fragen 10 und 12",
     quote: "Wir haben keine klassische leistungsorientierte Entlohnung […] Den Arbeitsmarkt kann man natürlich nicht ignorieren.",
   },
   {
-    id: "martin", name: "Martin", role: "Privatkundenbetreuer", salary: 3000, market: 3000, stars: 3,
-    request: "Ich hab nebenbei meinen Master gemacht. Nachts. Mit Red Bull. 300 € mehr? 🥱🎓",
+    id: "martin", name: "Martin", role: "Privatkundenbetreuer", salary: 3000, market: 3000, stars: 4,
+    request: "Ich hab nebenbei meinen Master gemacht und trotzdem hier performed. 300 € mehr? 🎓",
     options: [
       { label: "Klar, 300 € mehr!", cost: 300, team: -5, next: "zert", reaction: "Martin feiert. Am nächsten Tag liegen drei Zertifikate auf deinem Tisch … 📚" },
       { label: "Nicht automatisch. Aber bewirb dich auf mehr Verantwortung.", cost: 0, team: 5, bank: true, reaction: "Martin bewirbt sich intern 💡" },
-      { label: "Master? Hier zählt Erfahrung.", cost: 0, team: -10, reaction: "Martin aktualisiert sein LinkedIn 😔" },
+      { label: "Master? Hier zählt Erfahrung.", cost: 0, team: -10, reaction: "Martin stellt sein LinkedIn auf „Open to Work“ 😔" },
     ],
     criterion: "Qualifikation", source: "Frage 9",
     quote: "Trotzdem bedeutet ein zusätzlicher Abschluss nicht automatisch eine Gehaltserhöhung.",
   },
   {
     id: "thomas", name: "Thomas", role: "Zahlungsverkehr", salary: 2800, market: 2900, stars: 3,
-    request: "Wir haben Zwillinge bekommen! 👶👶 Ich brauch mehr Geld. Und Schlaf.",
+    request: "Wir haben Zwillinge bekommen! 👶👶 Ich brauch mehr Geld.",
     options: [
       { label: "Glückwunsch! +250 €", cost: 250, team: -5, next: "brigitte", reaction: "Thomas strahlt. Brigitte aus der Buchhaltung hat's gehört … 🍼" },
       { label: "Privat ist privat.", cost: 0, team: -15, reaction: "Später erfährt Thomas, dass ihm die Kinderzulage zugestanden wäre. Der Betriebsrat ruft an 📞" },
@@ -57,22 +57,22 @@ export const CARDS = [
     quote: "Daraus können sich dann auch entsprechende fixe Zulagen ergeben.",
   },
   {
-    id: "kevin", name: "Kevin", role: "Bewerber, Risikomanagement", salary: null, ask: 3900, market: 3700, stars: null,
+    id: "klaus", name: "Klaus", role: "Bewerber, Risikomanagement", salary: null, ask: 3900, market: 3700, stars: null,
     request: "Ich hab drei Angebote. Unter 3.900 € komm ich nicht. Und mein Hund kommt mit ins Büro. 🐕",
     options: [
-      { label: "Alles, inklusive Hund", cost: 400, team: -5, next: "gerhard", reaction: "Kevin und Bello fangen Montag an. Gerhard schaut grimmig … 🐶" },
+      { label: "Alles, inklusive Hund", cost: 400, team: -5, next: "gerhard", reaction: "Klaus und Bello fangen Montag an. Gerhard schaut grimmig … 🐶" },
       { label: "Absage", cost: 0, team: -25, reaction: "Stelle bleibt leer. Das Team macht Überstunden 😩" },
-      { label: "3.700 €: marktüblich und intern erklärbar", cost: 200, team: 0, bank: true, reaction: "Kevin nimmt an. Bello bleibt zuhause 🤝" },
+      { label: "3.700 €: marktüblich und intern erklärbar", cost: 200, team: 0, bank: true, reaction: "Klaus nimmt an. Bello bleibt zuhause 🤝" },
     ],
     criterion: "Markt", source: "Fragen 12 und 13",
     quote: "Wenn bestimmte Qualifikationen knapp sind, können wir nicht so tun, als gäbe es diese Situation nicht.",
   },
   {
-    id: "julia", name: "Julia", role: "Firmenkundenbetreuerin", salary: 3600, market: 3800, stars: 4, compare: "Kollege Markus, gleicher Job: 3.800 €",
+    id: "nicole", name: "Nicole", role: "Firmenkundenbetreuerin", salary: 3600, market: 3800, stars: 4, compare: "Kollege Markus, gleicher Job: 3.800 €",
     request: "Markus macht denselben Job wie ich und kriegt 200 € mehr. Zufall, dass er ein Mann ist? 🤨",
     options: [
-      { label: "Er hat halt besser verhandelt.", cost: 0, team: -20, reaction: "Julia ruft die Gleichbehandlungsanwaltschaft an ⚖️😡" },
-      { label: "Kein sachlicher Grund: auf 3.800 € angleichen", cost: 200, team: 15, bank: true, reaction: "Julia ist zufrieden ✅" },
+      { label: "Er hat halt besser verhandelt.", cost: 0, team: -20, reaction: "Nicole ruft die Gleichbehandlungsanwaltschaft an ⚖️😡" },
+      { label: "Kein sachlicher Grund: auf 3.800 € angleichen", cost: 200, team: 15, bank: true, reaction: "Nicole ist zufrieden ✅" },
       { label: "Dann kürzen wir halt Markus.", cost: 0, team: -25, reaction: "Jetzt sind beide sauer. Markus kündigt 💀" },
     ],
     criterion: "Gleichbehandlung", source: "Frage 16",
@@ -90,11 +90,11 @@ export const CARDS = [
     quote: "Wir haben uns dazu entschlossen, keine variable Entlohnung im Gehalt einzubinden, damit Mitarbeiter wegen kurzfristiger persönlicher Ziele keine falschen Anreize bekommen.",
   },
   {
-    id: "max", name: "Max", role: "Neffe vom Aufsichtsrat", salary: 2900, market: 2900, stars: 2,
+    id: "florian", name: "Florian", role: "Neffe vom Aufsichtsrat", salary: 2900, market: 2900, stars: 2,
     request: "Onkel Herbert meint, ich hab 300 € mehr verdient. Er lässt grüßen. 😎",
     options: [
       { label: "Grüße zurück! +300 €", cost: 300, team: -20, reaction: "Das ganze Haus weiß es in 10 Minuten 🙄" },
-      { label: "+100 €, damit Ruhe ist", cost: 100, team: -10, reaction: "Max ist beleidigt, das Team auch 😒" },
+      { label: "+100 €, damit Ruhe ist", cost: 100, team: -10, reaction: "Florian ist beleidigt, das Team auch 😒" },
       { label: "Nein, dafür gibt es keinen sachlichen Grund.", cost: 0, extra: 150, team: 10, bank: true, reaction: "Onkel Herbert kürzt dir 150 € Budget. Das Team feiert dich trotzdem, weil du fair bleibst 👏" },
     ],
     criterion: "Erklärbarkeit", source: "Frage 20",
@@ -104,12 +104,12 @@ export const CARDS = [
 
 // Extra-Gespräche: kommen nur nach bestimmten Antworten. Hier gibt es nur Schadensbegrenzung.
 export const EXTRAS = {
-  joerg: {
-    id: "joerg", name: "Jörg", role: "Kundenberater, gleicher Job wie Sandra", extra: true, market: null,
+  peter: {
+    id: "peter", name: "Peter", role: "Kundenberater, gleicher Job wie Sandra", extra: true, market: null,
     request: "Sandra kriegt 500 € mehr als ich. Für DENSELBEN Job. Erklär mir das. 😠",
     options: [
-      { label: "Du kriegst auch 500 €.", cost: 500, team: 0, reaction: "Jörg ist besänftigt. Dein Budget nicht 💸" },
-      { label: "Sie ist halt besser.", cost: 0, team: -15, reaction: "Jörg erzählt es allen in der Kaffeeküche ☕😤" },
+      { label: "Du kriegst auch 500 €.", cost: 500, team: 0, reaction: "Peter ist besänftigt. Dein Budget nicht 💸" },
+      { label: "Sie ist halt besser.", cost: 0, team: -15, reaction: "Peter erzählt es allen in der Kaffeeküche ☕😤" },
       { label: "Kein Kommentar.", cost: 0, team: -20, reaction: "Jetzt glaubt jeder, du verheimlichst was 🤫" },
     ],
   },
@@ -137,7 +137,7 @@ export const EXTRAS = {
     options: [
       { label: "Du kriegst auch 3.900 €.", cost: 300, team: 0, reaction: "Gerhard ist versöhnt. Dein Budget weint 💸" },
       { label: "Der Markt ist halt so.", cost: 0, team: -15, reaction: "Gerhard macht ab jetzt Dienst nach Vorschrift 😑" },
-      { label: "Ich kürze Kevin wieder.", cost: 0, extra: -400, team: -20, reaction: "Kevin kündigt. Bello auch 🐕💨" },
+      { label: "Ich kürze Klaus wieder.", cost: 0, extra: -400, team: -20, reaction: "Klaus kündigt. Bello auch 🐕💨" },
     ],
   },
 };
