@@ -326,3 +326,6 @@ b { font-weight: 800; }
 .bubblewrap { padding-top: 90px; }
 .deltas.big .d { font-size: 18px; padding: 7px 14px; }
 .bubble .btap { margin-top: 8px; font-size: 12px; opacity: .6; text-align: right; }
+.qrbox { display: flex; flex-direction: column; align-items: center; }
+.qrbox svg { margin: 0 auto; }
+.fact1 .lbl { margin-left: 0; flex-basis: 100%; }

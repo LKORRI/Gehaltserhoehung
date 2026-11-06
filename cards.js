@@ -1,6 +1,6 @@
 // „Gehaltserhöhung – Überlebst du die Gehaltsverhandlungen?“
 // 8 Gespräche, gleiche Reihenfolge für alle. Manche falschen Antworten lösen ein Extra-Gespräch aus (next).
-// Jede Option: cost (€ pro Monat, vom Budget), team (Teamfrieden), bank: true = so entscheidet die echte Raiffeisenbank laut Interview.
+// Jede Option: cost (€ pro Monat, vom Budget), team (Teamzufriedenheit), bank: true = so entscheidet die echte Raiffeisenbank laut Interview.
 // Der Weg der echten Bank ergibt den einzigen Höchstwert (Prüfung: node test/check.mjs).
 
 export const TITLE = "Gehaltserhöhung";

@@ -14,7 +14,7 @@
     <div class="brand"><span class="dot"></span>Gehaltserhöhung</div>
     <div class="hud hidden" id="hud">
       <span class="chip-s" id="hBudget"></span>
-      <span class="chip-s">😊 <span class="mbar"><span id="hTeam"></span></span> <span id="hTeamN"></span></span>
+      <span class="chip-s">😁 <span class="mbar"><span id="hTeam"></span></span> <span id="hTeamN"></span></span>
     </div>
   </div>
   <div id="app" class="screen"><p class="lead">Verbinde …</p></div>
@@ -22,7 +22,7 @@
 
 <script type="module">
 import { connect } from "./db.js";
-import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, REACTION_MS, play, score, euro, costOf } from "./cards.js";
+import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, REACTION_MS, play, score, euro, costOf } from "./cards.js";
 import { card, delta, esc, LETTERS, randomId, store, session, avatar } from "./ui.js";
 import { moodOf } from "./avatars.js";
 
@@ -74,15 +74,15 @@ function rulesHtml() {
   return `
     <div class="rules">
       <div>💬 <b>${CARDS.length} Leute wollen mehr Geld.</b> Du wählst jeweils eine von 3 Antworten. Achtung: Manches spricht sich rum …</div>
-      <div>💰 <b>Budget</b> ${euro(START_BUDGET)} · 😊 <b>Teamfrieden</b> ${START_TEAM}. Fällt eins unter 0, <b>fliegst du raus.</b></div>
-      <div>🏆 Am Ende zählen Teamfrieden + Restbudget. <b>Perfekt: ${MAX_SCORE} Punkte.</b> Du kannst so oft spielen, wie du willst.</div>
+      <div>💰 <b>Budget</b> ${euro(START_BUDGET)} · 😁 <b>Teamzufriedenheit</b> ${START_TEAM}. Fällt eins unter 0, <b>fliegst du raus.</b></div>
+      <div>🏆 Am Ende zählen Teamzufriedenheit + Restbudget. <b>Wer holt die meisten Punkte?</b> Du kannst so oft spielen, wie du willst.</div>
     </div>`;
 }
 
 function joinScreen() {
   updateHud(null);
   setScreen(`
-    <h1 class="big-title">${esc(SUBTITLE)}</h1>
+    <h1 class="big-title">${esc(SUBTITLE).replace("Gehaltsverhandlungen", "Gehalts&shy;verhandlungen")}</h1>
     <p class="lead">Du bist Chef*in einer Bank. Alle wollen mehr Geld. Wie gerecht entlohnst du?</p>
     ${rulesHtml()}
     <form id="f" style="margin-top:16px">
@@ -183,7 +183,7 @@ async function finishRun(s) {
   const who = s.history[s.history.length - 1].card.name;
   const ev = s.over === "budget" ? `wurde nach ${who} vom Aufsichtsrat gefeuert 📞`
     : s.over === "team" ? `hat bei ${who} das Team verloren 🚪`
-    : sc === MAX_SCORE ? `hat ${MAX_SCORE} Punkte, perfekt! 🏆` : `hat durchgehalten: ${sc} Punkte 🎉`;
+    : `hat durchgehalten: ${sc} Punkte 🎉`;
   const picks = Object.fromEntries(s.history.map((h) => [h.id, h.opt]));
   const upd = { [`runs/${pid}/${run.id}`]: { answers: run.answers, picks, score: sc, month: s.month, over: s.over || null, t: db.now() } };
   if (sc > best) Object.assign(upd, { [`players/${pid}/best`]: sc, [`players/${pid}/bestPicks`]: picks });
@@ -196,18 +196,17 @@ function endScreen() {
   updateHud(s);
   const sc = score(s);
   const head = s.over === "budget" ? { e: "📞", t: "Gefeuert!", x: `Bei ${s.history[s.history.length - 1].card.name} ist das Budget gesprengt. Der Aufsichtsrat hat angerufen.` }
-    : s.over === "team" ? { e: "🚪", t: "Dein Team ist weg!", x: `Bei ${s.history[s.history.length - 1].card.name} ist der Teamfrieden im Keller. Reihenweise Kündigungen.` }
-    : sc === MAX_SCORE ? { e: "🏆", t: "Perfekt!", x: "Du entscheidest genau wie die echte Raiffeisenbank. Respekt." }
-    : { e: "🎉", t: "Überlebt!", x: "Gar nicht schlecht. Aber da geht noch mehr." };
+    : s.over === "team" ? { e: "🚪", t: "Dein Team ist weg!", x: `Bei ${s.history[s.history.length - 1].card.name} ist die Teamzufriedenheit im Keller. Reihenweise Kündigungen.` }
+    : { e: "🎉", t: "Überlebt!", x: "Du hast alle Gespräche überstanden. Geht da noch mehr?" };
   setScreen(`
     <div class="card center">
       <div class="type-emoji">${head.e}</div>
       <h2 class="verdict ${s.over ? "bad" : ""}">${esc(head.t)}</h2>
       <p class="situation">${esc(head.x)}</p>
-      <div class="bigscore"><b>${sc}</b><span>von ${MAX_SCORE} Punkten</span></div>
+      <div class="bigscore"><b>${sc}</b><span>Punkte</span></div>
       <div class="stats">
         <div><b class="${s.budget < 0 ? "neg" : ""}">${euro(s.budget)}</b><span>Budget</span></div>
-        <div><b>${s.team}</b><span>Teamfrieden</span></div>
+        <div><b>${s.team}</b><span>Team&shy;zufriedenheit</span></div>
         <div><b>${s.matches}/${s.base}</b><span>wie die Bank</span></div>
       </div>
       <p class="source" style="margin-top:12px">Dein bester Versuch: ${Math.max(sc, me.best ?? 0) === 1 ? "1 Punkt" : Math.max(sc, me.best ?? 0) + " Punkte"}</p>
@@ -231,7 +230,7 @@ function closedScreen() {
     <div class="card center">
       <div class="type-emoji">⏰</div>
       <h2 class="verdict">Zeit ist um!</h2>
-      ${best != null ? `<div class="bigscore"><b>${best}</b><span>dein bester Versuch · max. ${MAX_SCORE}</span></div>` : `<p class="situation">Du hast keinen Durchgang beendet.</p>`}
+      ${best != null ? `<div class="bigscore"><b>${best}</b><span>dein bester Versuch</span></div>` : `<p class="situation">Du hast keinen Durchgang beendet.</p>`}
     </div>
     ${state.phase === "bank" ? `<div class="card" style="margin-top:14px"><div class="counter">So hätte die Raiffeisenbank entschieden</div>${rows}</div>` : `<p class="waitnote">Schau auf den Beamer 👀</p>`}`, `closed-${state.phase}-${best}`);
 }

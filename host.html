@@ -28,7 +28,7 @@
 
 <script type="module">
 import { connect } from "./db.js";
-import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, PLAY_SECONDS, euro } from "./cards.js";
+import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, PLAY_SECONDS, euro } from "./cards.js";
 import { esc, store, avatar } from "./ui.js";
 
 const main = document.getElementById("main");
@@ -78,8 +78,8 @@ function lobby() {
     <div class="lobby">
       <div>
         <h1>Gehalts&shy;erhöhung<em>!</em></h1>
-        <p class="lead"><b>${esc(SUBTITLE)}</b> ${CARDS.length} Leute wollen mehr Geld. Du hast ${euro(START_BUDGET)} Budget und ${START_TEAM} Teamfrieden. Fällt eins unter 0, fliegst du raus.</p>
-        <div class="goal">🏆 Perfekt: <b>${MAX_SCORE} Punkte</b>. Wer kommt am nächsten ran?</div>
+        <p class="lead"><b>${esc(SUBTITLE)}</b> ${CARDS.length} Leute wollen mehr Geld. Du hast ${euro(START_BUDGET)} Budget und ${START_TEAM} Teamzufriedenheit. Fällt eins unter 0, fliegst du raus.</p>
+        <div class="goal">🏆 Wer holt die meisten Punkte?</div>
         <div class="crew">${crew()}</div>
         <div class="count" id="cnt"></div>
         <div class="players" id="pl"></div>
@@ -117,9 +117,9 @@ function playView() {
         </div>
       </div>
       <div>
-        <h2 class="lbtitle">Rangliste <span class="muted">Perfekt: ${MAX_SCORE} · ${nRuns} ${nRuns === 1 ? "Versuch" : "Versuche"}</span></h2>
+        <h2 class="lbtitle">Rangliste <span class="muted">${nRuns} ${nRuns === 1 ? "Versuch" : "Versuche"}</span></h2>
         <div class="board">
-          ${rows.slice(0, 8).map((r, i) => `<div class="brow ${r.best === MAX_SCORE ? "perfect" : ""}"><span class="pos">${medals[i] || i + 1}</span><span>${esc(r.name)} <small>${r.tries}× gespielt</small></span><span class="pts">${r.best}</span></div>`).join("") || `<p class="empty">Gleich tauchen hier die ersten Ergebnisse auf …</p>`}
+          ${rows.slice(0, 8).map((r, i) => `<div class="brow"><span class="pos">${medals[i] || i + 1}</span><span>${esc(r.name)} <small>${r.tries}× gespielt</small></span><span class="pts">${r.best}</span></div>`).join("") || `<p class="empty">Gleich tauchen hier die ersten Ergebnisse auf …</p>`}
         </div>
       </div>
     </div>`, "play-" + JSON.stringify(rows.slice(0, 8).map((r) => [r.name, r.best, r.tries])) + events.map((e) => e.t).join(",") + nRuns);
@@ -140,7 +140,7 @@ function final() {
   const rs = allRuns();
   const fired = rs.filter((r) => r.over === "budget").length;
   const lost = rs.filter((r) => r.over === "team").length;
-  const perfect = rows.filter((r) => r.best === MAX_SCORE).length;
+  const survived = rs.filter((r) => !r.over).length;
   const pod = [rows[1], rows[0], rows[2]];
   setMain(`
     <div class="final">
@@ -153,7 +153,7 @@ function final() {
       <div class="bigstats">
         <div class="bigstat"><b>📞 ${fired}</b><span>Mal vom Aufsichtsrat gefeuert</span></div>
         <div class="bigstat"><b>🚪 ${lost}</b><span>Mal das Team verloren</span></div>
-        <div class="bigstat"><b>🏆 ${perfect}</b><span>Mal perfekt (${MAX_SCORE} Punkte)</span></div>
+        <div class="bigstat"><b>🎉 ${survived}</b><span>Mal alle Gespräche überlebt</span></div>
       </div>
     </div>`, "final-" + rows.map((r) => r.best).join(","));
   hinfo.innerHTML = `<span>${rs.length} Versuche insgesamt</span>`;

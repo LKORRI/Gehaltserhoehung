@@ -39,8 +39,8 @@ export function delta(cost, mood) {
   const parts = [];
   if (cost > 0) parts.push(`<span class="d bad">💰 Budget −${euro(cost)}</span>`);
   if (cost < 0) parts.push(`<span class="d good">💰 Budget +${euro(-cost)}</span>`);
-  if (mood > 0) parts.push(`<span class="d good">😊 Team +${mood}</span>`);
-  if (mood < 0) parts.push(`<span class="d bad">😊 Team −${-mood}</span>`);
+  if (mood > 0) parts.push(`<span class="d good">😁 Team +${mood}</span>`);
+  if (mood < 0) parts.push(`<span class="d bad">😁 Team −${-mood}</span>`);
   if (!parts.length) parts.push(`<span class="d">keine Auswirkung</span>`);
   return parts.join("");
 }
