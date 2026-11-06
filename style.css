@@ -335,3 +335,8 @@ b { font-weight: 800; }
 .ava .crop.group img:nth-child(1) { left: 21%; top: 4%; }
 .ava .crop.group img:nth-child(2) { left: 2%; top: 34%; }
 .ava .crop.group img:nth-child(3) { left: 40%; top: 34%; }
+.final .podium { height: 46vh; }
+.ministats { display: flex; flex-wrap: wrap; gap: .6em; margin-top: 1.2em; font-size: 1.25em; font-weight: 600; }
+.ministats span { background: var(--card); border: 1px solid var(--line); border-radius: 99px; padding: .35em .9em; }
+.final .board .brow { font-size: 1.3em; padding: .5em 1.1em; }
+.final .board { gap: .55em; } .final .board .brow { font-size: 1.15em; padding: .45em 1em; }

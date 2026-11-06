@@ -14,7 +14,7 @@ export const REACTION_MS = 4000;
 export const CARDS = [
   {
     id: "sandra", name: "Sandra", role: "Top-Kundenberaterin", salary: 3200, market: 3600, stars: 5,
-    request: "Die Sparkasse bietet mir 3.700 €. Was ist euer Angebot, dass ich nicht gehe? 👜",
+    request: "Die Sparkasse bietet mir 3.700 €. Was ist euer Angebot, dass ich nicht gehe?",
     options: [
       { label: "„Reisende soll man nicht aufhalten.“", cost: 0, team: -25, reaction: "Sandra geht. 40 Kunden gehen mit ihr. 🫠" },
       { label: "+200 € fix, Richtung Marktwert", cost: 200, team: 5, bank: true, reaction: "Sandra bleibt. Fair genug 🙂" },
@@ -25,7 +25,7 @@ export const CARDS = [
   },
   {
     id: "martin", name: "Martin", role: "Privatkundenbetreuer", salary: 3000, market: 3000, stars: 4,
-    request: "Ich hab nebenbei meinen Master gemacht und trotzdem hier performed. 300 € mehr? 🎓",
+    request: "Ich hab nebenbei meinen Master gemacht und trotzdem hier performed. 300 € mehr?",
     options: [
       { label: "Klar, 300 € mehr!", cost: 300, team: -5, next: "zert", reaction: "Martin feiert. Am nächsten Tag liegen drei Zertifikate auf deinem Tisch … 📚" },
       { label: "Nicht automatisch. Aber bewirb dich auf mehr Verantwortung.", cost: 0, team: 5, bank: true, reaction: "Martin bewirbt sich intern 💡" },
@@ -47,7 +47,7 @@ export const CARDS = [
   },
   {
     id: "anna", name: "Anna", role: "Neue Teamleiterin", salary: 3500, market: 4000, stars: 4,
-    request: "Ich leite jetzt 6 Leute. Und einen Drucker, der mich hasst. 🖨️",
+    request: "Ich leite jetzt 6 Leute. Und einen Drucker, der mich hasst.",
     options: [
       { label: "Fixe Führungszulage", cost: 300, team: 10, bank: true, reaction: "Anna legt motiviert los 💪" },
       { label: "Bonus, wenn dein Team mehr verkauft", cost: 150, team: -10, reaction: "Anna macht ihrem Team Verkaufsdruck 📈😬" },
@@ -58,7 +58,7 @@ export const CARDS = [
   },
   {
     id: "klaus", name: "Klaus", role: "Bewerber, Risikomanagement", salary: null, ask: 3900, market: 3700, stars: null,
-    request: "Ich hab drei Angebote. Unter 3.900 € komm ich nicht. Und mein Hund kommt mit ins Büro. 🐕",
+    request: "Ich hab drei Angebote. Unter 3.900 € komm ich nicht. Und mein Hund kommt mit ins Büro.",
     options: [
       { label: "Alles, inklusive Hund", cost: 400, team: -5, next: "gerhard", reaction: "Klaus und Bello fangen Montag an. Gerhard schaut grimmig … 🐶" },
       { label: "Absage", cost: 0, team: -25, reaction: "Stelle bleibt leer. Das Team macht Überstunden 😩" },
@@ -69,7 +69,7 @@ export const CARDS = [
   },
   {
     id: "nicole", name: "Nicole", role: "Firmenkundenbetreuerin", salary: 3600, market: 3800, stars: 4, compare: "Kollege Markus, gleicher Job: 3.800 €",
-    request: "Markus macht denselben Job wie ich und kriegt 200 € mehr. Zufall, dass er ein Mann ist? 🤨",
+    request: "Markus macht denselben Job wie ich und kriegt 200 € mehr. Zufall, dass er ein Mann ist?",
     options: [
       { label: "Er hat halt besser verhandelt.", cost: 0, team: -20, reaction: "Nicole ruft die Gleichbehandlungsanwaltschaft an ⚖️😡" },
       { label: "Kein sachlicher Grund: auf 3.800 € angleichen", cost: 200, team: 15, bank: true, reaction: "Nicole ist zufrieden ✅" },
@@ -80,7 +80,7 @@ export const CARDS = [
   },
   {
     id: "vertrieb", name: "Vertriebsteam", role: "Alle Kundenberater", salary: null, market: null, stars: null, group: true,
-    request: "Die Volksbank zahlt Provision! Wir wollen das auch! 📢",
+    request: "Die Volksbank zahlt Provision! Wir wollen das auch!",
     options: [
       { label: "Okay, Provision pro Abschluss", cost: 300, team: -5, reaction: "Oma Hilde hat jetzt drei Bausparverträge 👵📈" },
       { label: "Verkaufswettbewerb: Gewinner kriegt ein E-Bike!", cost: 100, team: -10, reaction: "Ellbogen-Duell im Schalterraum 🥊" },
@@ -91,7 +91,7 @@ export const CARDS = [
   },
   {
     id: "florian", name: "Florian", role: "Neffe vom Aufsichtsrat", salary: 2900, market: 2900, stars: 2,
-    request: "Onkel Herbert meint, ich hab 300 € mehr verdient. Er lässt grüßen. 😎",
+    request: "Onkel Herbert meint, ich hab 300 € mehr verdient. Er lässt grüßen.",
     options: [
       { label: "Grüße zurück! +300 €", cost: 300, team: -20, reaction: "Das ganze Haus weiß es in 10 Minuten 🙄" },
       { label: "+100 €, damit Ruhe ist", cost: 100, team: -10, reaction: "Florian ist beleidigt, das Team auch 😒" },
@@ -106,7 +106,7 @@ export const CARDS = [
 export const EXTRAS = {
   peter: {
     id: "peter", name: "Peter", role: "Kundenberater, gleicher Job wie Sandra", extra: true, market: null,
-    request: "Sandra kriegt 500 € mehr als ich. Für DENSELBEN Job. Erklär mir das. 😠",
+    request: "Sandra kriegt 500 € mehr als ich. Für DENSELBEN Job. Erklär mir das.",
     options: [
       { label: "Du kriegst auch 500 €.", cost: 500, team: 0, reaction: "Peter ist besänftigt. Dein Budget nicht 💸" },
       { label: "Sie ist halt besser.", cost: 0, team: -15, reaction: "Peter erzählt es allen in der Kaffeeküche ☕😤" },
@@ -115,7 +115,7 @@ export const EXTRAS = {
   },
   zert: {
     id: "zert", name: "Drei Kollegen", role: "mit frischen Zertifikaten", extra: true, market: null,
-    request: "„Excel für Fortgeschrittene“, 2 Stunden online. Also auch 300 € mehr? 📜📜📜",
+    request: "„Excel für Fortgeschrittene“, 2 Stunden online. Also auch 300 € mehr?",
     options: [
       { label: "Okay, allen 300 €.", cost: 900, team: 10, reaction: "Morgen kommen zehn weitere Zertifikate 📚📚📚" },
       { label: "Nur Martin, Pech gehabt.", cost: 0, team: -15, reaction: "„Warum der und wir nicht?“ 😤" },
@@ -124,7 +124,7 @@ export const EXTRAS = {
   },
   brigitte: {
     id: "brigitte", name: "Brigitte", role: "Buchhaltung, 3 Kinder", extra: true, market: null,
-    request: "Ich hab drei Kinder großgezogen und nie einen Cent extra bekommen! 😤",
+    request: "Ich hab drei Kinder großgezogen und nie einen Cent extra bekommen!",
     options: [
       { label: "Du kriegst auch 250 €.", cost: 250, team: -5, reaction: "Jetzt fragen alle Eltern im Haus nach 👨‍👩‍👧‍👦" },
       { label: "Damals war das anders.", cost: 0, team: -15, reaction: "Brigitte schreibt dem Betriebsrat ✉️" },
@@ -133,7 +133,7 @@ export const EXTRAS = {
   },
   gerhard: {
     id: "gerhard", name: "Gerhard, 61", role: "Risikomanagement, seit 1994", extra: true, market: null,
-    request: "30 Jahre bin ich hier. Und der Neue mit dem Hund verdient mehr als ich?! 👴",
+    request: "30 Jahre bin ich hier. Und der Neue mit dem Hund verdient mehr als ich?!",
     options: [
       { label: "Du kriegst auch 3.900 €.", cost: 300, team: 0, reaction: "Gerhard ist versöhnt. Dein Budget weint 💸" },
       { label: "Der Markt ist halt so.", cost: 0, team: -15, reaction: "Gerhard macht ab jetzt Dienst nach Vorschrift 😑" },
