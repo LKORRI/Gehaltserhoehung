@@ -80,7 +80,7 @@ export const CARDS = [
   },
   {
     id: "vertrieb", name: "Vertriebsteam", role: "Alle Kundenberater", salary: null, market: null, stars: null, group: true,
-    request: "Die Volksbank zahlt Provision! Wir wollen das auch!",
+    request: "Die Konkurrenz zahlt Provision! Wir wollen das auch!",
     options: [
       { label: "Okay, Provision pro Abschluss", cost: 300, team: -5, reaction: "Oma Hilde hat jetzt drei Bausparverträge 👵📈" },
       { label: "Verkaufswettbewerb: Gewinner kriegt ein E-Bike!", cost: 100, team: -10, reaction: "Ellbogen-Duell im Schalterraum 🥊" },
