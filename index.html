@@ -22,7 +22,7 @@
 
 <script type="module">
 import { connect } from "./db.js";
-import { CARDS, MONTHS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, play, score, euro } from "./cards.js";
+import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, REACTION_MS, play, score, euro } from "./cards.js";
 import { card, delta, esc, LETTERS, randomId, store, session, avatar } from "./ui.js";
 import { moodOf } from "./avatars.js";
 
@@ -33,7 +33,8 @@ const g = (params.get("g") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 let db, pid, me = null, state = null;
 let run = null; // { id, answers: [], startedAt }
-let view = "intro"; // intro | card | reaction | end
+let view = "intro"; // intro | card | end
+let bubbleTimer = null;
 let lastKey = "";
 
 function setScreen(html, key) {
@@ -72,9 +73,9 @@ function noGame() {
 function rulesHtml() {
   return `
     <div class="rules">
-      <div>📅 <b>12 Monate, 12 Leute</b> mit einer Bitte. Du wählst eine von 3 Antworten.</div>
+      <div>💬 <b>${CARDS.length} Leute wollen mehr Geld.</b> Du wählst jeweils eine von 3 Antworten.</div>
       <div>💰 <b>Budget</b> ${euro(START_BUDGET)} · 😊 <b>Teamfrieden</b> ${START_TEAM}. Fällt eins unter 0, <b>fliegst du raus.</b></div>
-      <div>🏆 Am Ende zählen Teamfrieden + Restbudget. <b>Perfektes Jahr: ${MAX_SCORE} Punkte.</b> Du kannst so oft spielen, wie du willst.</div>
+      <div>🏆 Am Ende zählen Teamfrieden + Restbudget. <b>Perfekt: ${MAX_SCORE} Punkte.</b> Du kannst so oft spielen, wie du willst.</div>
     </div>`;
 }
 
@@ -117,10 +118,11 @@ function startRun() {
 function cardScreen() {
   const i = run.answers.length;
   const s = play(run.answers);
+  if (s.over || s.done) return; // letzte Sprechblase läuft noch
   updateHud(s);
   const c = CARDS[i];
   if (setScreen(`
-    <div class="card">${card(c, { month: MONTHS[i], i, total: CARDS.length })}</div>
+    <div class="card">${card(c, { i, total: CARDS.length })}</div>
     <div class="options">
       ${c.options.map((o, k) => `<button class="opt" data-letter="${LETTERS[k]}" data-k="${k}">${esc(o.label)}</button>`).join("")}
     </div>`, `card-${run.id}-${i}`)) {
@@ -129,37 +131,51 @@ function cardScreen() {
 }
 
 function choose(k) {
-  if (!open() || view !== "card") return;
+  if (!open() || view !== "card" || bubbleTimer) return;
+  const before = play(run.answers);
   run.answers.push(k);
-  view = "reaction";
   const s = play(run.answers);
-  if (s.over || s.done) finishRun(s);
-  render();
+  const last = s.over || s.done;
+  if (last) { finishRun(s); updateHud(s); }
+  else render(); // nächste Karte liegt schon unter der Sprechblase
+  flashHud(before, s);
+  showBubble(run.answers.length - 1, last);
 }
 
-function reactionScreen() {
-  const i = run.answers.length - 1;
+function flashHud(a, b) {
+  const fl = (el, d) => { if (!d) return; el.classList.remove("flash-bad", "flash-good"); void el.offsetWidth; el.classList.add(d < 0 ? "flash-bad" : "flash-good"); };
+  fl(document.getElementById("hBudget"), b.budget - a.budget);
+  fl(document.getElementById("hTeamN").parentElement, b.team - a.team);
+}
+
+function showBubble(i, last) {
   const c = CARDS[i], o = c.options[run.answers[i]];
-  const s = play(run.answers);
-  updateHud(s);
-  const last = s.over || s.done;
-  setScreen(`
-    <div class="card">
-      <div class="counter">${MONTHS[i]}</div>
-      <div class="person"><div class="avatar big">${avatar(c.id, moodOf(o))}</div><div><h2>${esc(c.name)}</h2><div class="role">Du: ${esc(o.label)}</div></div></div>
-      <p class="reaction">${esc(o.reaction)}</p>
+  const wrap = document.createElement("div");
+  wrap.className = "bubblewrap";
+  wrap.innerHTML = `<div class="bubble">
+      <div class="bhead"><div class="avatar">${avatar(c.id, moodOf(o))}</div><div class="btext">${esc(o.reaction)}</div></div>
       <div class="deltas">${delta(o.cost, o.team)}</div>
-    </div>
-    <button class="btn" id="next">${last ? "Ergebnis ansehen" : `Weiter zum ${MONTHS[i + 1]} →`}</button>`, `react-${run.id}-${i}`);
-  document.getElementById("next").onclick = () => { view = last ? "end" : "card"; render(); };
+      <div class="bbar"><i style="animation-duration:${REACTION_MS}ms"></i></div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const done = () => {
+    if (!bubbleTimer) return;
+    clearTimeout(bubbleTimer); bubbleTimer = null;
+    wrap.classList.add("out");
+    setTimeout(() => wrap.remove(), 250);
+    if (last) { view = "end"; render(); }
+  };
+  bubbleTimer = setTimeout(done, REACTION_MS);
+  wrap.onclick = done; // Antippen überspringt
 }
 
 async function finishRun(s) {
   const sc = score(s);
   const best = me.best ?? -1;
-  const ev = s.over === "budget" ? `wurde im ${MONTHS[s.month - 1]} vom Aufsichtsrat gefeuert 📞`
-    : s.over === "team" ? `hat im ${MONTHS[s.month - 1]} das Team verloren 🚪`
-    : sc === MAX_SCORE ? `hat das perfekte Jahr geschafft! 🏆` : `hat das Jahr geschafft: ${sc} Punkte 🎉`;
+  const who = CARDS[s.month - 1].name;
+  const ev = s.over === "budget" ? `wurde nach ${who} vom Aufsichtsrat gefeuert 📞`
+    : s.over === "team" ? `hat bei ${who} das Team verloren 🚪`
+    : sc === MAX_SCORE ? `hat ${MAX_SCORE} Punkte, perfekt! 🏆` : `hat durchgehalten: ${sc} Punkte 🎉`;
   const upd = { [`runs/${pid}/${run.id}`]: { answers: run.answers, score: sc, month: s.month, over: s.over || null, t: db.now() } };
   if (sc > best) Object.assign(upd, { [`players/${pid}/best`]: sc, [`players/${pid}/bestAnswers`]: run.answers });
   upd[`feed/${db.now()}_${pid}`] = { name: me.name, text: ev, t: db.now() };
@@ -170,10 +186,10 @@ function endScreen() {
   const s = play(run.answers);
   updateHud(s);
   const sc = score(s);
-  const head = s.over === "budget" ? { e: "📞", t: `Im ${MONTHS[s.month - 1]} gefeuert!`, x: "Du hast das Budget gesprengt. Der Aufsichtsrat hat angerufen." }
-    : s.over === "team" ? { e: "🚪", t: `Im ${MONTHS[s.month - 1]} ist dein Team weg!`, x: "Der Teamfrieden ist im Keller. Reihenweise Kündigungen." }
-    : sc === MAX_SCORE ? { e: "🏆", t: "Das perfekte Jahr!", x: "Du entscheidest genau wie die echte Raiffeisenbank. Respekt." }
-    : { e: "🎉", t: "Jahr geschafft!", x: "Gar nicht schlecht. Aber da geht noch mehr." };
+  const head = s.over === "budget" ? { e: "📞", t: "Gefeuert!", x: `Nach Gespräch ${s.month} ist das Budget gesprengt. Der Aufsichtsrat hat angerufen.` }
+    : s.over === "team" ? { e: "🚪", t: "Dein Team ist weg!", x: `Nach Gespräch ${s.month} ist der Teamfrieden im Keller. Reihenweise Kündigungen.` }
+    : sc === MAX_SCORE ? { e: "🏆", t: "Perfekt!", x: "Du entscheidest genau wie die echte Raiffeisenbank. Respekt." }
+    : { e: "🎉", t: "Überlebt!", x: "Gar nicht schlecht. Aber da geht noch mehr." };
   setScreen(`
     <div class="card center">
       <div class="type-emoji">${head.e}</div>
@@ -218,11 +234,10 @@ function render() {
   if (state.phase === "play") {
     if (!run) return startRun();
     if (view === "card") return cardScreen();
-    if (view === "reaction") return reactionScreen();
     return endScreen();
   }
   // Zeit um: laufenden Versuch abbrechen
-  if (run && view !== "end" && view !== "reaction") run = null;
+  if (run && view !== "end" && !bubbleTimer) run = null;
   return closedScreen();
 }
 

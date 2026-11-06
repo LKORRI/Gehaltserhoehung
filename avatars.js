@@ -91,8 +91,8 @@ function blobAvatar(id, mood) {
 
 export function moodOf(o) {
   if (!o) return "sad";
-  if (o.quit || o.mood <= -15) return "angry";
-  if (o.mood < 0) return "sad";
-  if (o.mood > 0 || o.cost > 0) return "happy";
+  if (o.quit || (o.team ?? o.mood) <= -15) return "angry";
+  if ((o.team ?? o.mood) < 0) return "sad";
+  if ((o.team ?? o.mood) > 0 || o.cost > 0) return "happy";
   return "neutral";
 }

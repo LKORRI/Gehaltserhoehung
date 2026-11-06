@@ -2,7 +2,7 @@
 
 Handy-Spiel für die Präsentation der Seminararbeit „Relative Lohngerechtigkeit in der Entlohnungspraxis der Raiffeisenbank Bruck-Carnuntum“ (PFO).
 
-Jeder spielt für sich am Handy die Geschäftsleitung einer Bank: 12 Monate, 12 Leute mit einer Bitte, je 3 Antworten. Zwei Anzeigen: Budget (Start 1.500 €) und Teamfrieden (Start 30). Fällt eine unter 0, ist das Spiel vorbei. Punkte = 20 (Jahr geschafft) + Teamfrieden + Restbudget ÷ 10. Den Höchstwert von 190 Punkten erreicht nur, wer genau so entscheidet wie die echte Raiffeisenbank laut Interview. Man kann während der Spielzeit beliebig oft spielen, der beste Versuch zählt.
+Jeder spielt für sich am Handy die Geschäftsleitung einer Bank: 8 Gespräche, 8 Leute mit einer Bitte, je 3 Antworten. Nach jeder Antwort zeigt eine kurze Sprechblase (1,6 Sek.) die Reaktion, dann kommt automatisch das nächste Gespräch. Zwei Anzeigen: Budget (Start 1.200 €) und Teamfrieden (Start 20). Fällt eine unter 0, ist das Spiel vorbei. Punkte = 20 (durchgehalten) + Teamfrieden + Restbudget ÷ 10. Den Höchstwert von 130 Punkten erreicht nur, wer genau so entscheidet wie die echte Raiffeisenbank laut Interview. Man kann während der Spielzeit beliebig oft spielen, der beste Versuch zählt.
 
 Der Beamer zeigt Countdown, Live-Rangliste und Ticker, danach Siegertreppchen und „So hätte die Raiffeisenbank entschieden“.
 

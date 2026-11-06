@@ -12,32 +12,26 @@ export function stars(n) {
   return `<span class="stars">${"★".repeat(n)}<span class="off">${"★".repeat(5 - n)}</span></span>`;
 }
 
-// Gehalt vs. Marktwert als Mini-Skala
+// Gehalt vs. Marktwert + Leistung in einer kompakten Zeile
 export function payLine(v) {
   const pay = v.salary ?? v.ask;
   const diff = pay - v.market;
-  const tag = Math.abs(diff) < 1 ? `<span class="tag ok">passt ✅</span>`
+  const tag = Math.abs(diff) < 1 ? `<span class="tag ok">= Markt ✅</span>`
     : diff < 0 ? `<span class="tag low">${euro(-diff)} unter Markt 🔻</span>`
     : `<span class="tag high">${euro(diff)} über Markt 🔺</span>`;
-  return `
-    <div class="pay">
-      <div class="payrow"><span>${v.salary == null ? "Verlangt" : "Verdient"}</span><b>${euro(pay)}</b></div>
-      <div class="payrow"><span>Markt zahlt</span><b>${euro(v.market)}</b></div>
-      ${v.compare ? `<div class="payrow cmp"><span>${esc(v.compare)}</span></div>` : ""}
-      <div class="payrow">${tag}</div>
-    </div>`;
+  return `<div class="fact1"><span>${v.salary == null ? "will" : "verdient"} <b>${euro(pay)}</b></span>${tag}${v.stars != null ? `<span class="lbl">Leistung ${stars(v.stars)}</span>` : ""}</div>`
+    + (v.compare ? `<div class="fact1 cmp">${esc(v.compare)}</div>` : "");
 }
 
-export function card(v, { month, i, total, round } = {}) {
-  const head = month ? `<div class="counter">${esc(month)} · ${i + 1}/${total}</div>` : round != null ? `<div class="counter">Runde ${round + 1} von ${total}</div>` : "";
-  const facts = v.market == null ? "" : `<div class="facts">${payLine(v)}<div class="perf"><span>Leistung</span>${stars(v.stars)}</div></div>`;
+export function card(v, { i, total } = {}) {
+  const head = total ? `<div class="counter">Gespräch ${i + 1}/${total}</div>` : "";
   return `
     ${head}
     <div class="person">
       <div class="avatar">${avatar(v.id)}</div>
       <div><h2>${esc(v.name)}</h2><div class="role">${esc(v.role)}</div></div>
     </div>
-    ${facts}
+    ${v.market == null ? "" : payLine(v)}
     <div class="request">„${esc(v.request)}“</div>`;
 }
 

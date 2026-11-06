@@ -28,7 +28,7 @@
 
 <script type="module">
 import { connect } from "./db.js";
-import { CARDS, MONTHS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, PLAY_SECONDS, euro } from "./cards.js";
+import { CARDS, START_BUDGET, START_TEAM, SUBTITLE, MAX_SCORE, PLAY_SECONDS, euro } from "./cards.js";
 import { esc, store, avatar } from "./ui.js";
 
 const main = document.getElementById("main");
@@ -58,7 +58,7 @@ function qrSvg(text) {
   return qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
 }
 
-const crew = () => ["sandra", "martin", "thomas", "anna", "kevin", "brigitteKevin", "julia", "joerg", "lukas"].map((id) => `<span class="mini">${avatar(id)}</span>`).join("");
+const crew = () => CARDS.map((c) => c.id).map((id) => `<span class="mini">${avatar(id)}</span>`).join("");
 
 function chips(el) {
   const names = Object.values(players).sort((a, b) => a.t - b.t);
@@ -78,8 +78,8 @@ function lobby() {
     <div class="lobby">
       <div>
         <h1>Gehalts&shy;erhöhung<em>!</em></h1>
-        <p class="lead"><b>${esc(SUBTITLE)}</b> 12 Monate, 12 Leute wollen mehr Geld. Du hast ${euro(START_BUDGET)} Budget und ${START_TEAM} Teamfrieden. Fällt eins unter 0, fliegst du raus.</p>
-        <div class="goal">🏆 Perfektes Jahr: <b>${MAX_SCORE} Punkte</b>. Wer kommt am nächsten ran?</div>
+        <p class="lead"><b>${esc(SUBTITLE)}</b> ${CARDS.length} Leute wollen mehr Geld. Du hast ${euro(START_BUDGET)} Budget und ${START_TEAM} Teamfrieden. Fällt eins unter 0, fliegst du raus.</p>
+        <div class="goal">🏆 Perfekt: <b>${MAX_SCORE} Punkte</b>. Wer kommt am nächsten ran?</div>
         <div class="crew">${crew()}</div>
         <div class="count" id="cnt"></div>
         <div class="players" id="pl"></div>
@@ -113,11 +113,11 @@ function playView() {
         <div class="qrmini">${qrSvg(playerUrl())}<span>Noch nicht dabei?<br>Jetzt scannen!</span></div>
         <div class="ticker">
           <div class="counter">Live aus der Chefetage</div>
-          ${events.map((e) => `<div class="tick"><b>${esc(e.name)}</b> ${esc(e.text)}</div>`).join("") || `<div class="tick muted2">Noch niemand hat ein Jahr beendet …</div>`}
+          ${events.map((e) => `<div class="tick"><b>${esc(e.name)}</b> ${esc(e.text)}</div>`).join("") || `<div class="tick muted2">Noch niemand ist durch …</div>`}
         </div>
       </div>
       <div>
-        <h2 class="lbtitle">Rangliste <span class="muted">Perfektes Jahr: ${MAX_SCORE} · ${nRuns} ${nRuns === 1 ? "Versuch" : "Versuche"}</span></h2>
+        <h2 class="lbtitle">Rangliste <span class="muted">Perfekt: ${MAX_SCORE} · ${nRuns} ${nRuns === 1 ? "Versuch" : "Versuche"}</span></h2>
         <div class="board">
           ${rows.slice(0, 8).map((r, i) => `<div class="brow ${r.best === MAX_SCORE ? "perfect" : ""}"><span class="pos">${medals[i] || i + 1}</span><span>${esc(r.name)} <small>${r.tries}× gespielt</small></span><span class="pts">${r.best}</span></div>`).join("") || `<p class="empty">Gleich tauchen hier die ersten Ergebnisse auf …</p>`}
         </div>
@@ -153,7 +153,7 @@ function final() {
       <div class="bigstats">
         <div class="bigstat"><b>📞 ${fired}</b><span>Mal vom Aufsichtsrat gefeuert</span></div>
         <div class="bigstat"><b>🚪 ${lost}</b><span>Mal das Team verloren</span></div>
-        <div class="bigstat"><b>🏆 ${perfect}</b><span>${perfect === 1 ? "perfektes Jahr" : "perfekte Jahre"} (${MAX_SCORE} Punkte)</span></div>
+        <div class="bigstat"><b>🏆 ${perfect}</b><span>Mal perfekt (${MAX_SCORE} Punkte)</span></div>
       </div>
     </div>`, "final-" + rows.map((r) => r.best).join(","));
   hinfo.innerHTML = `<span>${rs.length} Versuche insgesamt</span>`;
