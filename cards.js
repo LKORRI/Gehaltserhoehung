@@ -8,7 +8,7 @@ export const SUBTITLE = "Überlebst du die Gehaltsverhandlungen?";
 export const START_BUDGET = 1200;
 export const START_TEAM = 20;
 export const FINISH_BONUS = 20; // Bonus fürs Durchkommen, damit jeder Durchläufer vor jedem Rausgeflogenen liegt
-export const PLAY_SECONDS = 240;
+export const PLAY_SECONDS = 300;
 export const REACTION_MS = 4000;
 
 export const CARDS = [

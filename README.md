@@ -8,7 +8,7 @@ Der Beamer zeigt Countdown, Live-Rangliste und Ticker, danach Siegertreppchen un
 
 ## Seiten
 
-- `host.html` – Beamer: Start → Spielzeit (Standard 4 Minuten, ändern mit `?sek=300`) → Siegertreppchen → Auflösung. Leertaste / Pfeil rechts = weiter, Pfeil links = zurück.
+- `host.html` – Beamer: Start → Spielzeit (Standard 5 Minuten, ändern mit `?sek=300`) → Siegertreppchen → Auflösung. Leertaste / Pfeil rechts = weiter, Pfeil links = zurück.
 - `index.html` – Handy-Ansicht (über den QR-Code).
 
 ## Inhalte ändern
