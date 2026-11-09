@@ -82,7 +82,7 @@ export const CARDS = [
     id: "vertrieb", name: "Vertriebsteam", role: "Alle Kundenberater", salary: null, market: null, stars: null, group: true,
     request: "Die Konkurrenz zahlt Provision! Wir wollen das auch!",
     options: [
-      { label: "Okay, Provision pro Abschluss", cost: 300, team: -5, reaction: "Oma Hilde hat jetzt drei Bausparverträge 👵📈" },
+      { label: "Okay, Provision pro Abschluss", cost: 300, team: 10, reaction: "Oma Hilde hat jetzt drei Bausparverträge 👵📈" },
       { label: "Verkaufswettbewerb: Gewinner kriegt ein E-Bike!", cost: 100, team: -10, reaction: "Ellbogen-Duell im Schalterraum 🥊" },
       { label: "Nein. Fixgehalt, keine falschen Anreize.", cost: 0, team: -5, bank: true, reaction: "Murren im Team. Aber die Kunden werden ehrlich beraten 🤝" },
     ],
@@ -109,7 +109,7 @@ export const EXTRAS = {
     request: "Sandra kriegt 500 € mehr als ich. Für DENSELBEN Job. Erklär mir das.",
     options: [
       { label: "Du kriegst auch 500 €.", cost: 500, team: 0, reaction: "Peter ist besänftigt. Dein Budget nicht 💸" },
-      { label: "Sie ist halt besser.", cost: 0, team: -15, reaction: "Peter erzählt es allen in der Kaffeeküche ☕😤" },
+      { label: "Sie ist halt besser.", cost: 0, team: -10, reaction: "Peter erzählt es allen in der Kaffeeküche ☕😤" },
       { label: "Kein Kommentar.", cost: 0, team: -20, reaction: "Jetzt glaubt jeder, du verheimlichst was 🤫" },
     ],
   },
