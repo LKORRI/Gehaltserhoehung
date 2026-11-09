@@ -82,9 +82,9 @@ export const CARDS = [
     id: "vertrieb", name: "Vertriebsteam", role: "Alle Kundenberater", salary: null, market: null, stars: null, group: true,
     request: "Die Konkurrenz zahlt Provision! Wir wollen das auch!",
     options: [
-      { label: "Okay, Provision pro Abschluss", cost: 300, team: 10, reaction: "Oma Hilde hat jetzt drei Bausparverträge 👵📈" },
-      { label: "Verkaufswettbewerb: Gewinner kriegt ein E-Bike!", cost: 100, team: -10, reaction: "Ellbogen-Duell im Schalterraum 🥊" },
-      { label: "Nein. Fixgehalt, keine falschen Anreize.", cost: 0, team: -5, bank: true, reaction: "Murren im Team. Aber die Kunden werden ehrlich beraten 🤝" },
+      { label: "Okay, Provision pro Abschluss", cost: 300, team: 10, reaction: "Das Team jubelt. Jetzt wird jedem Kunden alles verkauft, ob er's braucht oder nicht 📈" },
+      { label: "Einmal 100 € Prämie, damit Ruhe ist", cost: 100, team: -5, reaction: "Kurz Freude. Nächsten Monat fragen sie wieder 🙄" },
+      { label: "Nein. Fixgehalt, damit niemand Kunden was aufschwatzt.", cost: 0, team: -5, bank: true, reaction: "Kurzes Murren. Aber die Kunden werden ehrlich beraten 🤝" },
     ],
     criterion: "Leistung", source: "Fragen 10 und 18",
     quote: "Wir haben uns dazu entschlossen, keine variable Entlohnung im Gehalt einzubinden, damit Mitarbeiter wegen kurzfristiger persönlicher Ziele keine falschen Anreize bekommen.",
