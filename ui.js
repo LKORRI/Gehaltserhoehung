@@ -35,13 +35,13 @@ export function card(v, { i, total } = {}) {
     <div class="request">„${esc(v.request)}“</div>`;
 }
 
-export function delta(cost, mood) {
+export function delta(cost, mood, partial = false) {
   const parts = [];
   if (cost > 0) parts.push(`<span class="d bad">💰 Budget −${euro(cost)}</span>`);
   if (cost < 0) parts.push(`<span class="d good">💰 Budget +${euro(-cost)}</span>`);
   if (mood > 0) parts.push(`<span class="d good">😁 Team +${mood}</span>`);
   if (mood < 0) parts.push(`<span class="d bad">😁 Team −${-mood}</span>`);
-  if (!parts.length) parts.push(`<span class="d">keine Auswirkung</span>`);
+  if (!parts.length && !partial) parts.push(`<span class="d">keine Auswirkung</span>`);
   return parts.join("");
 }
 

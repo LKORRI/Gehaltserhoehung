@@ -356,3 +356,4 @@ html, body { overflow-x: hidden; }
   .opt { padding-left: 50px; font-size: 15px; }
   .opt::before { left: 9px; width: 30px; height: 30px; }
 }
+.d small { font-weight: 600; opacity: .8; font-size: .78em; }

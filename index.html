@@ -161,7 +161,7 @@ function showBubble(i, last) {
   wrap.className = "bubblewrap";
   wrap.innerHTML = `<div class="bubble">
       <div class="bhead"><div class="avatar">${avatar(c.id)}</div><div class="btext">${esc(o.reaction)}</div></div>
-      <div class="deltas big">${delta(costOf(o), o.team)}</div>
+      <div class="deltas big">${o.extra ? delta(o.cost, 0, true) + `<span class="d ${o.extra > 0 ? "bad" : "good"}">💰 Budget ${o.extra > 0 ? "−" : "+"}${euro(Math.abs(o.extra))} <small>(${esc(o.extraLabel || "")})</small></span>` + delta(0, o.team, true) : delta(costOf(o), o.team)}</div>
       <div class="bbar"><i style="animation-duration:${REACTION_MS}ms"></i></div>
       <div class="btap">Antippen = weiter · Halten = Pause</div>
     </div>`;

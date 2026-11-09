@@ -95,7 +95,7 @@ export const CARDS = [
     options: [
       { label: "Grüße zurück! +300 €", cost: 300, team: -20, reaction: "Das ganze Haus weiß es in 10 Minuten 🙄" },
       { label: "+100 €, damit Ruhe ist", cost: 100, team: -10, reaction: "Florian ist beleidigt, das Team auch 😒" },
-      { label: "Nein, dafür gibt es keinen sachlichen Grund.", cost: 0, extra: 150, team: 10, bank: true, reaction: "Onkel Herbert kürzt dir 150 € Budget. Das Team feiert dich trotzdem, weil du fair bleibst 👏" },
+      { label: "Nein, dafür gibt es keinen sachlichen Grund.", cost: 0, extra: 150, extraLabel: "Onkel Herbert kürzt", team: 10, bank: true, reaction: "Onkel Herbert kürzt dir 150 € Budget. Das Team feiert dich trotzdem, weil du fair bleibst 👏" },
     ],
     criterion: "Erklärbarkeit", source: "Frage 20",
     quote: "Wenn ich eine Gehaltsentscheidung sachlich erklären kann und vergleichbare Situationen auch vergleichbar behandle, dann sind wir aus meiner Sicht schon sehr nahe dran.",
@@ -119,7 +119,7 @@ export const EXTRAS = {
     options: [
       { label: "Okay, allen 300 €.", cost: 900, team: 10, reaction: "Morgen kommen zehn weitere Zertifikate 📚📚📚" },
       { label: "Nur Martin, Pech gehabt.", cost: 0, team: -15, reaction: "„Warum der und wir nicht?“ 😤" },
-      { label: "Martin kriegt's doch nicht.", cost: 0, extra: -300, team: -20, reaction: "Du nimmst Martins Erhöhung zurück. Jetzt ist er sauer 😡" },
+      { label: "Martin kriegt's doch nicht.", cost: 0, extra: -300, extraLabel: "Martins Erhöhung zurück", team: -20, reaction: "Du nimmst Martins Erhöhung zurück. Jetzt ist er sauer 😡" },
     ],
   },
   brigitte: {
@@ -137,7 +137,7 @@ export const EXTRAS = {
     options: [
       { label: "Du kriegst auch 3.900 €.", cost: 300, team: 0, reaction: "Gerhard ist versöhnt. Dein Budget weint 💸" },
       { label: "Der Markt ist halt so.", cost: 0, team: -15, reaction: "Gerhard macht ab jetzt Dienst nach Vorschrift 😑" },
-      { label: "Ich kürze Klaus wieder.", cost: 0, extra: -400, team: -20, reaction: "Klaus kündigt. Wuffi auch 🐕💨" },
+      { label: "Ich kürze Klaus wieder.", cost: 0, extra: -400, extraLabel: "Klaus geht, Gehalt gespart", team: -20, reaction: "Klaus kündigt. Wuffi auch 🐕💨" },
     ],
   },
 };
