@@ -95,7 +95,7 @@ export const CARDS = [
     options: [
       { label: "Grüße zurück! +300 €", cost: 300, team: -20, reaction: "Das ganze Haus weiß es in 10 Minuten 🙄" },
       { label: "+100 €, damit Ruhe ist", cost: 100, team: -10, reaction: "Florian ist beleidigt, das Team auch 😒" },
-      { label: "Nein, dafür gibt es keinen sachlichen Grund.", cost: 0, extra: 150, extraLabel: "Onkel Herbert kürzt", hint: "Onkel Herbert kürzt dir das Budget", team: 10, bank: true, reaction: "Onkel Herbert kürzt dir 150 € Budget. Das Team feiert dich trotzdem, weil du fair bleibst 👏" },
+      { label: "Nein, dafür gibt es keinen sachlichen Grund.", cost: 0, team: 10, bank: true, reaction: "Onkel Herbert ist beleidigt. Das Team feiert dich, weil du fair bleibst 👏" },
     ],
     criterion: "Erklärbarkeit", source: "Frage 20",
     quote: "Wenn ich eine Gehaltsentscheidung sachlich erklären kann und vergleichbare Situationen auch vergleichbar behandle, dann sind wir aus meiner Sicht schon sehr nahe dran.",
