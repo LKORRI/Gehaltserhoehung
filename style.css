@@ -343,3 +343,16 @@ b { font-weight: 800; }
 .bubblewrap { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .bubblewrap.held .bubble { transform: scale(.98); transition: transform .15s; }
 .bubblewrap, .bubblewrap * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+/* schmale Android-Handys (ab 320 px) */
+html, body { overflow-x: hidden; }
+@media (max-width: 400px) {
+  .phone .topbar .brand { font-size: 0; gap: 0; }
+  .phone .hud { gap: 4px; }
+  .phone .chip-s { padding: 5px 8px; font-size: 13px; gap: 4px; }
+  .phone .mbar { width: 34px; }
+}
+@media (max-width: 340px) {
+  .phone { padding: 0 10px 30px; }
+  .opt { padding-left: 50px; font-size: 15px; }
+  .opt::before { left: 9px; width: 30px; height: 30px; }
+}
