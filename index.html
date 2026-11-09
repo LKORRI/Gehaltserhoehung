@@ -6,7 +6,7 @@
 <title>Gehaltserhöhung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <div class="phone">
@@ -115,6 +115,7 @@ function startRun() {
   render();
 }
 
+const costChip = (t) => `<span class="cost ${t > 0 ? "neg" : t < 0 ? "pos" : ""}">${t > 0 ? "−" + euro(t) : t < 0 ? "+" + euro(-t) : "0 €"}</span>`;
 function cardScreen() {
   const i = run.answers.length;
   const s = play(run.answers);
@@ -124,7 +125,7 @@ function cardScreen() {
   if (setScreen(`
     <div class="card ${c.extra ? "extra" : ""}">${card(c, { i: s.base, total: CARDS.length })}</div>
     <div class="options">
-      ${c.options.map((o, k) => `<button class="opt" data-letter="${LETTERS[k]}" data-k="${k}"><span>${esc(o.label)}</span><span class="cost ${o.cost > 0 ? "neg" : ""}">${o.cost > 0 ? "−" + euro(o.cost) : "0 €"}</span></button>`).join("")}
+      ${c.options.map((o, k) => `<button class="opt" data-letter="${LETTERS[k]}" data-k="${k}"><span>${esc(o.label)}${o.hint ? `<small class="hint">💰 ${esc(o.hint)}</small>` : ""}</span>${costChip(costOf(o))}</button>`).join("")}
     </div>`, `card-${run.id}-${i}`)) {
     app.querySelectorAll(".opt").forEach((b) => (b.onclick = () => choose(+b.dataset.k)));
   }
