@@ -21,9 +21,10 @@
 <div class="box">
   <p>1. Am Laptop <b>host.html</b> öffnen (Beamer-Ansicht) und den Spiel-Code aus der Adresse kopieren (<code>?g=XXXX</code>).<br>
   2. Hier Code eintragen, Anzahl wählen, starten.<br>
-  3. Am Beamer-Tab das Spiel starten. Die Bots spielen dann wie echte Handys (alle 2–5 Sek. eine Antwort, mehrere Versuche).</p>
+  3. Am Beamer-Tab das Spiel starten. Die Bots spielen dann wie echte Handys (alle 2–5 Sek. eine Antwort, mehrere Versuche).<br>
+  <b>Nur Handy?</b> Code leer lassen: Dann legt die Seite selbst ein Testspiel an, startet es für 90 Sek. und prüft am Ende, ob alles in der Datenbank angekommen ist.</p>
   <form id="f">
-    Code <input id="g" size="8" required>
+    Code <input id="g" size="8" placeholder="leer = eigenes Testspiel">
     Bots <input id="n" type="number" value="30" min="1" max="80" style="width:70px">
     <button>Bots starten</button>
   </form>
@@ -51,12 +52,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rid = () => Math.random().toString(36).slice(2, 8);
 const bots = [];
 const lat = [];
-let errors = 0, runsDone = 0;
+let errors = 0, runsDone = 0, left = null;
 
 function draw() {
   const conn = bots.filter((b) => b.connected).length;
   document.getElementById("sum").textContent =
-    `${bots.length} Bots · ${conn} verbunden · ${runsDone} Versuche gespeichert · ${errors} Fehler`;
+    `${bots.length} Bots · ${conn} verbunden · ${runsDone} Versuche gespeichert · ${errors} Fehler` + (left ? ` · noch ${left} s` : "");
   if (lat.length) {
     const s = [...lat].sort((a, b) => a - b);
     const p = (q) => s[Math.min(s.length - 1, Math.floor(q * s.length))];
@@ -116,12 +117,36 @@ async function bot(i, g) {
   }
 }
 
-document.getElementById("f").onsubmit = (e) => {
+document.getElementById("f").onsubmit = async (e) => {
   e.preventDefault();
-  const g = document.getElementById("g").value.trim().toUpperCase();
+  let g = document.getElementById("g").value.trim().toUpperCase();
   const n = Math.min(80, +document.getElementById("n").value || 30);
   document.querySelector("#f button").disabled = true;
+  const own = !g;
+  let ctl;
+  if (own) {
+    g = "TEST" + rid().toUpperCase().slice(0, 4);
+    ctl = dbMod.getDatabase(appMod.initializeApp(firebaseConfig, "ctl"));
+    await set(ref(ctl, `games/${g}/state`), { phase: "lobby" });
+    document.getElementById("g").value = g;
+  }
   for (let i = 0; i < n; i++) setTimeout(() => bot(i, g), i * 150);
+  if (!own) return;
+  // eigenes Testspiel: warten bis alle drin sind, 90 Sek. spielen, dann beenden und nachzählen
+  const t0 = Date.now();
+  while (bots.filter((b) => b.status !== "verbinde …").length < n && Date.now() - t0 < 30000) await sleep(500);
+  await set(ref(ctl, `games/${g}/state`), { phase: "play", endsAt: Date.now() + 90000 });
+  for (let s = 90; s > 0; s--) { left = s; await sleep(1000); }
+  left = null;
+  await set(ref(ctl, `games/${g}/state`), { phase: "final" });
+  await sleep(4000);
+  const snap = (await dbMod.get(ref(ctl, `games/${g}`))).val() || {};
+  const pl = Object.keys(snap.players || {}).length;
+  const rn = Object.values(snap.runs || {}).reduce((a, r) => a + Object.keys(r).length, 0);
+  const ok = pl === n && rn === runsDone && errors === 0;
+  document.getElementById("sum").insertAdjacentHTML("afterend",
+    `<p class="big" style="color:${ok ? "#1d7a33" : "#b3261e"}">${ok ? "✅ Hält!" : "⚠️ Achtung"} In der Datenbank: ${pl}/${n} Spieler, ${rn}/${runsDone} Versuche.</p>`);
+  await dbMod.remove(ref(ctl, `games/${g}`));
 };
 </script>
 </body>
