@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lasttest</title>
+<style>
+  body { font: 15px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; background: #f6efe4; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  .box { background: #fff; border-radius: 14px; padding: 14px; margin: 10px 0; max-width: 720px; }
+  input, button { font: inherit; padding: 8px 12px; border-radius: 10px; border: 2px solid #ddd; }
+  button { background: #1a1a1a; color: #fff; border: 0; font-weight: 700; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; }
+  .b { background: #eee; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
+  .b.ok { background: #dcf3dc; } .b.err { background: #fbd5d5; } .b.wait { background: #fff3c4; }
+  .big { font-size: 18px; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>🤖 Lasttest</h1>
+<div class="box">
+  <p>1. Am Laptop <b>host.html</b> öffnen (Beamer-Ansicht) und den Spiel-Code aus der Adresse kopieren (<code>?g=XXXX</code>).<br>
+  2. Hier Code eintragen, Anzahl wählen, starten.<br>
+  3. Am Beamer-Tab das Spiel starten. Die Bots spielen dann wie echte Handys (alle 2–5 Sek. eine Antwort, mehrere Versuche).</p>
+  <form id="f">
+    Code <input id="g" size="8" required>
+    Bots <input id="n" type="number" value="30" min="1" max="80" style="width:70px">
+    <button>Bots starten</button>
+  </form>
+</div>
+<div class="box">
+  <div class="big" id="sum">Noch nicht gestartet.</div>
+  <div id="lat"></div>
+</div>
+<div class="box grid" id="grid"></div>
+
+<script type="module">
+import { firebaseConfig } from "./config.js";
+import { CARDS, play, score } from "./cards.js";
+
+const FB = "10.12.2";
+const appMod = await import(`https://www.gstatic.com/firebasejs/${FB}/firebase-app.js`);
+const dbMod = await import(`https://www.gstatic.com/firebasejs/${FB}/firebase-database.js`);
+const { ref, set, update, onValue } = dbMod;
+
+const qs = new URLSearchParams(location.search);
+if (qs.get("g")) document.getElementById("g").value = qs.get("g");
+
+const NAMES = ["Anna","Ben","Clara","David","Eva","Felix","Gina","Hannes","Iris","Jonas","Kathi","Lukas","Mia","Nico","Olga","Paul","Rosa","Sepp","Tina","Udo","Vroni","Willi","Xenia","Yusuf","Zoe","Alex","Berni","Cem","Dani","Elli"];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const rid = () => Math.random().toString(36).slice(2, 8);
+const bots = [];
+const lat = [];
+let errors = 0, runsDone = 0;
+
+function draw() {
+  const conn = bots.filter((b) => b.connected).length;
+  document.getElementById("sum").textContent =
+    `${bots.length} Bots · ${conn} verbunden · ${runsDone} Versuche gespeichert · ${errors} Fehler`;
+  if (lat.length) {
+    const s = [...lat].sort((a, b) => a - b);
+    const p = (q) => s[Math.min(s.length - 1, Math.floor(q * s.length))];
+    document.getElementById("lat").textContent = `Speicherzeit: Median ${p(0.5)} ms · 95 % unter ${p(0.95)} ms · max ${s[s.length - 1]} ms`;
+  }
+  document.getElementById("grid").innerHTML = bots.map((b) =>
+    `<div class="b ${b.err ? "err" : b.phase === "play" ? "ok" : "wait"}"><b>${b.name}</b><br>${b.err || b.status}</div>`).join("");
+}
+setInterval(draw, 500);
+
+async function bot(i, g) {
+  const name = "🤖 " + NAMES[i % NAMES.length] + (i >= NAMES.length ? i : "");
+  const b = { name, status: "verbinde …", connected: false, phase: null, err: null };
+  bots.push(b);
+  try {
+    const app = appMod.initializeApp(firebaseConfig, "bot" + i + "_" + rid()); // eigene Verbindung pro Bot, wie ein eigenes Handy
+    const db = dbMod.getDatabase(app);
+    onValue(ref(db, ".info/connected"), (s) => { b.connected = !!s.val(); });
+    const pid = "bot_" + rid();
+    const t0 = performance.now();
+    await set(ref(db, `games/${g}/players/${pid}`), { name, t: Date.now() });
+    lat.push(Math.round(performance.now() - t0));
+    b.status = "wartet auf Start";
+    let state = null;
+    onValue(ref(db, `games/${g}/state`), (s) => { state = s.val(); b.phase = state && state.phase; });
+    let best = -1;
+    while (true) {
+      if (!state || state.phase !== "play") {
+        if (state && (state.phase === "final" || state.phase === "bank") && runsDone) { b.status = "fertig"; return; }
+        await sleep(300); continue;
+      }
+      // ein Versuch
+      const answers = [];
+      let s = play(answers);
+      while (!s.done && !s.over && state.phase === "play") {
+        await sleep(2000 + Math.random() * 3000);
+        answers.push(Math.floor(Math.random() * 3));
+        s = play(answers);
+        b.status = `Versuch, Gespräch ${answers.length}`;
+      }
+      if (state.phase !== "play") continue;
+      const sc = score(s);
+      const picks = Object.fromEntries(s.history.map((h) => [h.id, h.opt]));
+      const now = Date.now();
+      const upd = { [`runs/${pid}/${rid()}`]: { answers, picks, score: sc, month: s.month, over: s.over || null, t: now } };
+      if (sc > best) { best = sc; Object.assign(upd, { [`players/${pid}/best`]: sc, [`players/${pid}/bestPicks`]: picks }); }
+      upd[`feed/${now}_${pid}`] = { name, text: s.over ? "ist rausgeflogen (Bot)" : `hat durchgehalten: ${sc} Punkte (Bot)`, t: now };
+      const t1 = performance.now();
+      await update(ref(db, `games/${g}`), upd);
+      lat.push(Math.round(performance.now() - t1));
+      runsDone++;
+      b.status = `bester: ${best} Pkt.`;
+      await sleep(1500 + Math.random() * 2000);
+    }
+  } catch (e) {
+    errors++; b.err = String(e.message || e).slice(0, 60);
+  }
+}
+
+document.getElementById("f").onsubmit = (e) => {
+  e.preventDefault();
+  const g = document.getElementById("g").value.trim().toUpperCase();
+  const n = Math.min(80, +document.getElementById("n").value || 30);
+  document.querySelector("#f button").disabled = true;
+  for (let i = 0; i < n; i++) setTimeout(() => bot(i, g), i * 150);
+};
+</script>
+</body>
+</html>
